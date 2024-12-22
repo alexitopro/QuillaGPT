@@ -7,5 +7,5 @@ To run the app, you will need to have Python installed on your machine. You can 
 pip install -r requirements.txt
 ```
 
-# Contributing
+## Contributing
 This repository is intended only for educational purposes.
