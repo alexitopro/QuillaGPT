@@ -1,7 +1,7 @@
 # QuillaGPT
 QuillaGPT is a chatbot that uses RAG capabilities to assist with the processes of the School of Science and Engineering at Pontificia Universidad Católica del Perú
 ## Usage
-To run the app, you will need to have Python installed on your machine. 
+To run the app, you will need to have Python installed on your machine. You then create a new isolated Python environment inside the venv directory to avoid potential conflicts with other Python projects.
 ```
 python3 -m venv venv
 ```
