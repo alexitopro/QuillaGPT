@@ -1,6 +1,9 @@
 langchain
 langchain_community
+langchain_pinecone
 langchain_core
 langchain_openai
+langchain-text-splitters
 python-dotenv
+unstructured
 streamlit
