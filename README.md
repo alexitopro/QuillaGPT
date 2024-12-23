@@ -24,5 +24,13 @@ pip install -r requirements.txt
 9. **Unstructured** converts unstructured data into structured data that can be processed and analyzed.
 10. **Streamlit** is a framework for building interactive web applications for data science and machine learning projects.
 11. **Sentence-transformers** is used for getting access to the embeddings model
+You then run scraper.py inside scraper folder to retrieve foundational data from the seletect sources
+```
+python3 scraper.py
+```
+You then create the embeddings and place them inside the Pinecone vector database
+```
+python3 create_embeddings.py
+```
 ## Contributing
 This repository is intended only for educational purposes.

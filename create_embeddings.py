@@ -64,13 +64,13 @@ index.upsert(vectors = records, namespace = "quillagpt-namespace")
 time.sleep(30)
 
 #probar la entrega de resultados
-query = "Hay algo relacionado con reconocimiento de cursos?"
-query_embedding = model.encode([query])[0].tolist()
-results = index.query(
-    namespace = "quillagpt-namespace",
-    vector = query_embedding,
-    top_k = 3,
-    include_values = False,
-    include_metadata = True
-)
-print(results)
+# query = "Hay algo relacionado con reconocimiento de cursos?"
+# query_embedding = model.encode([query])[0].tolist()
+# results = index.query(
+#     namespace = "quillagpt-namespace",
+#     vector = query_embedding,
+#     top_k = 3,
+#     include_values = False,
+#     include_metadata = True
+# )
+# print(results)
