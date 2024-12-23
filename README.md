@@ -13,7 +13,7 @@ You can install the required dependencies by running the following command in yo
 ```
 pip install -r requirements.txt
 ```
-You then run scraper.py inside scraper folder to retrieve foundational data from the seletect sources
+You then run scraper.py inside scraper folder to retrieve foundational data from the selected sources
 ```
 python3 scraper.py
 ```
