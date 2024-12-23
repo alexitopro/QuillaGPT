@@ -1,0 +1,21 @@
+# Ignore virtual environment directories
+venv/
+.venv/
+
+# Python bytecode files
+*.pyc
+*.pyo
+__pycache__/
+
+# Editor and IDE settings
+.idea/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Packaging
+*.egg-info/
+dist/
+build/
