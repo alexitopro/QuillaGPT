@@ -23,7 +23,7 @@ pip install -r requirements.txt
 8. **Python-dotenv** helps manage environment variables by loading them from .env files into our Python environment.
 9. **Unstructured** converts unstructured data into structured data that can be processed and analyzed.
 10. **Streamlit** is a framework for building interactive web applications for data science and machine learning projects.
-11. **Sentence-transformers** is used for getting access to the embeddings model
+11. **Sentence-transformers** is used for getting access to the embeddings model  
 You then run scraper.py inside scraper folder to retrieve foundational data from the seletect sources
 ```
 python3 scraper.py
