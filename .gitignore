@@ -19,3 +19,6 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+# API keys file
+.env

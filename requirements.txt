@@ -5,6 +5,8 @@ langchain_pinecone
 langchain_core
 langchain_openai
 langchain-text-splitters
+langchain-huggingface
 python-dotenv
 unstructured
 streamlit
+sentence-transformers
