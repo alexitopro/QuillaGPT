@@ -25,3 +25,23 @@ results = index.query(
     include_metadata = True
 )
 print(results)
+
+# from openai import OpenAI
+
+# client = OpenAI(
+#   base_url = "https://integrate.api.nvidia.com/v1",
+#   api_key = os.getenv("OPENAI_API_KEY")
+# )
+
+# completion = client.chat.completions.create(
+#   model="meta/llama-3.3-70b-instruct",
+#   messages=[{"role":"user","content":"Say hello."}],
+#   temperature=0.2,
+#   top_p=0.7,
+#   max_tokens=4096,
+#   stream=True
+# )
+
+# for chunk in completion:
+#   if chunk.choices[0].delta.content is not None:
+#     print(chunk.choices[0].delta.content, end="")
