@@ -40,8 +40,8 @@ def procesar_arch_pdf(arch):
     data = pdf_loader.load()
 
     #efectuar el chunking del texto
-    #chunk size es cuánto texto tiene cada fragmento.
-    #chunk overlap es cuánto texto se comparte entre fragmentos consecutivos.
+    #chunk size es cuanto texto tiene cada fragmento
+    #chunk overlap es cuanto texto se comparte entre fragmentos consecutivos
     splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 100)
     documentos = splitter.split_documents(data)
 

@@ -21,10 +21,6 @@ for file in os.listdir("data"):
         file_data = json.load(f)
         data.extend(file_data)
 
-#guardar la data en un json
-# with open("data.json", "w", encoding = "utf-8") as f:
-#     json.dump(data, f, ensure_ascii = False, indent = 4)
-
 #crear embeddings para nombre
 texts = [d["nombre"] for d in data]
 embeddings = model.encode(texts).tolist()
@@ -59,15 +55,3 @@ records = [
 
 #insertar los datos en el index
 index.upsert(vectors = records, namespace = "quillagpt-namespace")
-
-#probar la entrega de resultados
-# query = "Hay algo relacionado con reconocimiento de cursos?"
-# query_embedding = model.encode([query])[0].tolist()
-# results = index.query(
-#     namespace = "quillagpt-namespace",
-#     vector = query_embedding,
-#     top_k = 3,
-#     include_values = False,
-#     include_metadata = True
-# )
-# print(results)
