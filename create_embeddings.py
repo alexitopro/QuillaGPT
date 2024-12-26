@@ -60,9 +60,6 @@ records = [
 #insertar los datos en el index
 index.upsert(vectors = records, namespace = "quillagpt-namespace")
 
-#esperar a que los datos se inserten
-time.sleep(30)
-
 #probar la entrega de resultados
 # query = "Hay algo relacionado con reconocimiento de cursos?"
 # query_embedding = model.encode([query])[0].tolist()
