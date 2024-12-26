@@ -11,3 +11,4 @@ unstructured
 streamlit
 sentence-transformers
 pinecone
+streamlit
