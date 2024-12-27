@@ -36,36 +36,6 @@ with st.sidebar:
         unsafe_allow_html = True
     )
 
-#funcion para renderizar la imagen
-def render_message(rol, contenido, icono, streamer = False):
-    placeholder = st.empty()
-    role_class = "bot" if rol == "bot" else "user"
-    if not streamer:
-        placeholder.markdown(
-            f"""
-            <div class="message-container {role_class}">
-                <img src="data:image/png;base64,{icono}"/>
-                <div class="message-content">{contenido}</div>
-            </div>
-            """,
-            unsafe_allow_html = True,
-        )
-    else:
-        #simular streaming de mensajes
-        message = ""
-        for word in contenido.split():
-            message += word + " "
-            placeholder.markdown(
-                f"""
-                <div class="message-container {role_class}">
-                    <img src="data:image/png;base64,{icono}"/>
-                    <div class="message-content">{message}</div>
-                </div>
-                """,
-                unsafe_allow_html = True,
-            )
-            time.sleep(0.05)
-
 #container de inicio
 container_inicio = st.container()
 container_inicio.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
@@ -77,35 +47,5 @@ container_inicio.write(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-#mostrar mensajes
-for message in st.session_state.messages:
-    if message["role"] == "user":
-        render_message("user", message["content"], user_icon)
-    else:
-        render_message("bot", message["content"], bot_icon)
-
-# Generador de respuestas del bot
-def response_generator():
-    response = random.choice(
-        [
-            "¡Hola! ¿Cómo puedo ayudarte hoy?",
-            "Hola, humano. ¿En qué necesitas ayuda?",
-            "¿Necesitas alguna consulta específica?",
-        ]
-    )
-    return response
-
 #entrada de texto del usuario
 prompt = st.chat_input(placeholder="Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP")
-if prompt:
-    #agregar mensaje del usuario al historial
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    #mostar mensaje del usuario
-    render_message("user", prompt, user_icon)
-
-    #generar respuesta del bot
-    bot_response = response_generator()  # Generar respuesta del bot
-    render_message("bot", bot_response, bot_icon, streamer=True)
-
-    #agregar mensaje del bot al historial
-    st.session_state.messages.append({"role": "bot", "content": bot_response})
