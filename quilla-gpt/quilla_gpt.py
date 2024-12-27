@@ -68,6 +68,12 @@ for message in st.session_state.messages:
 
 #entrada de texto del usuario
 if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
+
+    #preparar el historial de conversacion
+    conversacion = []
+    for message in st.session_state.messages:
+        conversacion.append({"role": message["role"], "content": message["content"]})
+
     #anexar mensaje de usuario al historial
     st.session_state.messages.append({"role": "user", "content": prompt})
     #mostrar la respuesta del usuario
@@ -103,6 +109,7 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
             model = "meta/llama-3.3-70b-instruct",
             messages=[
                 sistema,
+                *conversacion,
                 {"role": "user", "content": prompt},
                 {"role": "assistant", "content": contexto}
             ],
