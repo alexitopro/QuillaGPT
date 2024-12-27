@@ -1,7 +1,23 @@
 import streamlit as st
 import base64
-import random
-import time
+import os
+from sentence_transformers import SentenceTransformer
+from pinecone import Pinecone
+from dotenv import load_dotenv
+from openai import OpenAI
+
+#inicializar las variables de entorno
+load_dotenv()
+cliente = OpenAI(
+  base_url = "https://integrate.api.nvidia.com/v1",
+  api_key = os.getenv("OPENAI_API_KEY")
+)
+#incicializar pinecone
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+index_name = "quillagpt-index"
+index = pc.Index(index_name)
+#cargar el modelo de embedding
+model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
 
 st.set_page_config(
     layout = "wide",
@@ -18,8 +34,6 @@ cargar_css("./style.css")
 def encode_image(file_path):
     with open(file_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
-user_icon = encode_image("./static/profile-account.png")
-bot_icon = encode_image("./static/squirrel.png")
 plus_icon = encode_image("./static/plus.png")
 
 #barra lateral
@@ -47,5 +61,55 @@ container_inicio.write(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+#mostrar los mensajes del historial
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
 #entrada de texto del usuario
-prompt = st.chat_input(placeholder="Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP")
+if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
+    #anexar mensaje de usuario al historial
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    #mostrar la respuesta del usuario
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    #agregar respuesta del asistente
+    with st.chat_message("assistant"):
+        #instruccion personalizada
+        sistema = {
+            "role": "system",
+            "content": (
+                "Te llamas QuillaGPT y ayudas sobre procesos académico-administrativos de la PUCP. "
+                "Menciona sobre qué fuente has sacado información y, si es de la guía del panda, menciona en qué página el usuario "
+                "puede encontrar más información. Asimismo, si hay algún link de interés, compártelo. "
+                "Si no encuentras información relacionada, puedes decir 'No tengo información sobre eso'."
+            ),
+        }
+
+        #buscar en pinecone los resultados del prompt
+        query_embedding = model.encode([prompt])[0].tolist()
+        results = index.query(
+            namespace = "quillagpt-namespace",
+            vector = query_embedding,
+            top_k = 3,
+            include_values = False,
+            include_metadata = True
+        )
+        retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
+        contexto = "\n".join(retrieved_documents)
+
+        #generamos la respuesta natural
+        stream =  cliente.chat.completions.create(
+            model = "meta/llama-3.3-70b-instruct",
+            messages=[
+                sistema,
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": contexto}
+            ],
+            temperature = 0.2,
+            top_p = 0.7,
+            max_tokens = 8192,
+            stream = True
+        )
+        response = st.write_stream(stream)
+    st.session_state.messages.append({"role": "assistant", "content": response})
