@@ -12,7 +12,8 @@ cliente = OpenAI(
   base_url = "https://integrate.api.nvidia.com/v1",
   api_key = os.getenv("OPENAI_API_KEY")
 )
-#incicializar pinecone
+
+# incicializar pinecone
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 index_name = "quillagpt-index"
 index = pc.Index(index_name)
@@ -63,8 +64,16 @@ if "messages" not in st.session_state:
 
 #mostrar los mensajes del historial
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    if message["role"] == "assistant":
+        with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
+            st.markdown(message["content"])
+    else:
+        div = f"""
+        <div class = "chat-row row-reverse">
+            <img src = "app/static/profile-account.png" width=40 height=40>
+            <div class = "user-message">{message["content"]}</div>
+        </div>"""
+        st.markdown(div, unsafe_allow_html=True)
 
 #entrada de texto del usuario
 if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
@@ -76,11 +85,17 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
 
     #anexar mensaje de usuario al historial
     st.session_state.messages.append({"role": "user", "content": prompt})
+
     #mostrar la respuesta del usuario
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    div = f"""
+    <div class = "chat-row row-reverse">
+        <img src = "app/static/profile-account.png" width=40 height=40>
+        <div class = "user-message">{prompt}</div>
+    </div>"""
+    st.markdown(div, unsafe_allow_html=True)
+
     #agregar respuesta del asistente
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar = "./static/squirrel.png"):
         #instruccion personalizada
         sistema = {
             "role": "system",
@@ -119,4 +134,5 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
             stream = True
         )
         response = st.write_stream(stream)
+        feedback = st.feedback("thumbs")
     st.session_state.messages.append({"role": "assistant", "content": response})

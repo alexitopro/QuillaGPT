@@ -5,3 +5,67 @@
     padding-left: 5rem;
     padding-right: 5rem;
 }
+
+/* Apple Bubble Chat CSS */
+.chat-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 30px;
+}
+
+.row-reverse {
+    flex-direction: row-reverse;
+}
+
+:root {
+    --send-bg: #0B93F6;
+    --send-color: white;
+    --receive-bg: #E5E5EA;
+    --receive-text: black;
+    --page-background: white;
+}
+
+/* Creating a tail for the user chat bubble */
+.user-message {
+    margin: 0; /*separacion entre el bubble y el icono*/
+    display: flex;
+    flex-direction: column;
+    background-color: var(--page-background);
+
+    max-width: 1000px; /*maxima cantidad de caracteres por linea*/
+    
+    word-wrap: break-word;
+    line-height: 24px;
+    position: relative;
+    padding: 10px 20px; /*espacio top y costados del texto del mensaje*/
+    border-radius: 25px; /*radio de bordeado del mensaje*/
+    
+    color: var(--send-color); 
+    background: var(--send-bg);
+    align-self: flex-end;
+    
+    &:before, &:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        height: 25px;
+    }
+
+    color: var(--send-color); 
+	background: var(--send-bg);
+		
+    /* tail styling*/
+	&:before {
+		right: -7px;
+        width: 20px;
+        background-color: var(--send-bg);
+		border-bottom-left-radius: 16px 14px;
+	}
+
+	&:after {
+		right: -26px;
+        width: 26px;
+        background-color: var(--page-background);
+		border-bottom-left-radius: 10px;
+	}
+}
