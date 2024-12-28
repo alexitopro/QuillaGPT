@@ -1,10 +1,13 @@
 import streamlit as st
 import base64
 import os
+import json
+import time
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
 from dotenv import load_dotenv
 from openai import OpenAI
+from streamlit_lottie import st_lottie_spinner
 
 #inicializar las variables de entorno
 load_dotenv()
@@ -36,6 +39,11 @@ def encode_image(file_path):
     with open(file_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 plus_icon = encode_image("./static/plus.png")
+
+#carga de spinner lottie
+def load_lottie_json(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
 
 #barra lateral
 with st.sidebar:
@@ -96,43 +104,47 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
 
     #agregar respuesta del asistente
     with st.chat_message("assistant", avatar = "./static/squirrel.png"):
-        #instruccion personalizada
-        sistema = {
-            "role": "system",
-            "content": (
-                "Te llamas QuillaGPT y ayudas sobre procesos académico-administrativos de la PUCP. "
-                "Menciona sobre qué fuente has sacado información y, si es de la guía del panda, menciona en qué página el usuario "
-                "puede encontrar más información. Asimismo, si hay algún link de interés, compártelo. "
-                "Si no encuentras información relacionada, puedes decir 'No tengo información sobre eso'."
-            ),
-        }
 
-        #buscar en pinecone los resultados del prompt
-        query_embedding = model.encode([prompt])[0].tolist()
-        results = index.query(
-            namespace = "quillagpt-namespace",
-            vector = query_embedding,
-            top_k = 3,
-            include_values = False,
-            include_metadata = True
-        )
-        retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
-        contexto = "\n".join(retrieved_documents)
+        lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
+        with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
 
-        #generamos la respuesta natural
-        stream =  cliente.chat.completions.create(
-            model = "meta/llama-3.3-70b-instruct",
-            messages=[
-                sistema,
-                *conversacion,
-                {"role": "user", "content": prompt},
-                {"role": "assistant", "content": contexto}
-            ],
-            temperature = 0.2,
-            top_p = 0.7,
-            max_tokens = 8192,
-            stream = True
-        )
+            #instruccion personalizada
+            sistema = {
+                "role": "system",
+                "content": (
+                    "Te llamas QuillaGPT y ayudas sobre procesos académico-administrativos de la PUCP. "
+                    "Menciona sobre qué fuente has sacado información y, si es de la guía del panda, menciona en qué página el usuario "
+                    "puede encontrar más información. Asimismo, si hay algún link de interés, compártelo. "
+                    "Si no encuentras información relacionada, puedes decir 'No tengo información sobre eso'."
+                ),
+            }
+
+            #buscar en pinecone los resultados del prompt
+            query_embedding = model.encode([prompt])[0].tolist()
+            results = index.query(
+                namespace = "quillagpt-namespace",
+                vector = query_embedding,
+                top_k = 3,
+                include_values = False,
+                include_metadata = True
+            )
+            retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
+            contexto = "\n".join(retrieved_documents)
+
+            #generamos la respuesta natural
+            stream =  cliente.chat.completions.create(
+                model = "meta/llama-3.3-70b-instruct",
+                messages=[
+                    sistema,
+                    *conversacion,
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": contexto}
+                ],
+                temperature = 0.2,
+                top_p = 0.7,
+                max_tokens = 8192,
+                stream = True
+            )
         response = st.write_stream(stream)
         feedback = st.feedback("thumbs")
     st.session_state.messages.append({"role": "assistant", "content": response})
