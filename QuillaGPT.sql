@@ -43,6 +43,11 @@ CREATE TABLE `Role` (
   `active` bool
 );
 
+INSERT INTO `Role` (`name`, `description`, `active`) 
+VALUES 
+('Administrador', 'Administrador de QuillaGPT', true),
+('Estudiante', 'Alumno de la Facultad de Ciencias e Ingeniería', true);
+
 CREATE TABLE `File` (
   `file_id` integer PRIMARY KEY AUTO_INCREMENT,
   `content` blob,
@@ -74,3 +79,7 @@ ALTER TABLE `Session` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
 ALTER TABLE `User` ADD FOREIGN KEY (`role_id`) REFERENCES `Role` (`role_id`);
 
 ALTER TABLE `RequestQuery` ADD FOREIGN KEY (`user_resolved_id`) REFERENCES `User` (`user_id`);
+
+INSERT INTO `User` (`role_id`, `email`, `username`, `password`, `active`) 
+VALUES 
+(1, 'admin@quillagpt.com', 'admin', SHA2('password123', 256), true);
