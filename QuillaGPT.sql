@@ -1,4 +1,12 @@
-CREATE TABLE `session` (
+DROP TABLE IF EXISTS `Message`;
+DROP TABLE IF EXISTS `Session`;
+DROP TABLE IF EXISTS `CustomInstruction`;
+DROP TABLE IF EXISTS `File`;
+DROP TABLE IF EXISTS `RequestQuery`;
+DROP TABLE IF EXISTS `User`;
+DROP TABLE IF EXISTS `Role`;
+
+CREATE TABLE `Session` (
   `session_id` integer PRIMARY KEY AUTO_INCREMENT,
   `start_session` timestamp DEFAULT (now()),
   `end_session` timestamp,
@@ -7,7 +15,7 @@ CREATE TABLE `session` (
   `active` bool
 );
 
-CREATE TABLE `message` (
+CREATE TABLE `Message` (
   `message_id` integer PRIMARY KEY AUTO_INCREMENT,
   `session_id` integer,
   `timestamp` timestamp DEFAULT (now()),
@@ -19,7 +27,7 @@ CREATE TABLE `message` (
   `active` bool
 );
 
-CREATE TABLE `user` (
+CREATE TABLE `User` (
   `user_id` integer PRIMARY KEY AUTO_INCREMENT,
   `role_id` integer,
   `email` varchar(255),
@@ -28,14 +36,14 @@ CREATE TABLE `user` (
   `active` bool
 );
 
-CREATE TABLE `role` (
+CREATE TABLE `Role` (
   `role_id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
   `description` varchar(255),
   `active` bool
 );
 
-CREATE TABLE `file` (
+CREATE TABLE `File` (
   `file_id` integer PRIMARY KEY AUTO_INCREMENT,
   `content` blob,
   `name` varchar(255),
@@ -43,13 +51,13 @@ CREATE TABLE `file` (
   `active` bool
 );
 
-CREATE TABLE `custom_instruction` (
+CREATE TABLE `CustomInstruction` (
   `custom_instruction_id` integer PRIMARY KEY,
   `instruction` varchar(255),
   `active` bool
 );
 
-CREATE TABLE `request_query` (
+CREATE TABLE `RequestQuery` (
   `request_query_id` integer PRIMARY KEY AUTO_INCREMENT,
   `query` varchar(255),
   `reply` varchar(255),
@@ -59,10 +67,10 @@ CREATE TABLE `request_query` (
   `active` bool
 );
 
-ALTER TABLE `message` ADD FOREIGN KEY (`session_id`) REFERENCES `session` (`session_id`);
+ALTER TABLE `Message` ADD FOREIGN KEY (`session_id`) REFERENCES `Session` (`session_id`);
 
-ALTER TABLE `session` ADD FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`);
+ALTER TABLE `Session` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
 
-ALTER TABLE `user` ADD FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`);
+ALTER TABLE `User` ADD FOREIGN KEY (`role_id`) REFERENCES `Role` (`role_id`);
 
-ALTER TABLE `request_query` ADD FOREIGN KEY (`user_resolved_id`) REFERENCES `user` (`user_id`);
+ALTER TABLE `RequestQuery` ADD FOREIGN KEY (`user_resolved_id`) REFERENCES `User` (`user_id`);
