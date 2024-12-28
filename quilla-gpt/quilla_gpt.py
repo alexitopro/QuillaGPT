@@ -2,7 +2,6 @@ import streamlit as st
 import base64
 import os
 import json
-import time
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone
 from dotenv import load_dotenv
