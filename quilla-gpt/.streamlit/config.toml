@@ -1,6 +1,7 @@
 [theme]
 primaryColor="black"
-#[client]
-#toolbarMode = "minimal"
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false
 [server]
 enableStaticServing = true
