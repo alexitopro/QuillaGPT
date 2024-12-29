@@ -18,15 +18,15 @@ with st.sidebar:
     # cargar_css("./style.css")
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
     
-    if st.button("Gestión de Usuarios", use_container_width=True, type="primary", icon=":material/group:"):
+    if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
         st.switch_page("./pages/admin_dashboard_users.py")
 
-    if st.button("Gestión de Conocimiento", use_container_width=True, type="primary", icon=":material/description:"):
+    if st.button("Gestión de Conocimiento", use_container_width=True, type="secondary", icon=":material/description:"):
         st.switch_page("./pages/admin_dashboard_knowledge.py")
 
     st.button("Banco de Consultas", use_container_width=True, icon=":material/question_answer:", disabled=True)
 
-    if st.button("Reporte de Indicadores", use_container_width=True, type="primary", icon=":material/bar_chart:"):
+    if st.button("Reporte de Indicadores", use_container_width=True, type="primsecondaryary", icon=":material/bar_chart:"):
         st.switch_page("./pages/admin_dashboard_report.py")
 
     if st.button("Cerrar sesión", use_container_width=True):

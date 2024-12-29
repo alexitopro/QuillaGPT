@@ -69,3 +69,65 @@
 		border-bottom-left-radius: 10px;
 	}
 }
+
+/* .element-container:has(style){
+    display: none;
+}
+#button-logout {
+    display: none;
+}
+#button-indicadores {
+    display: none;
+}
+.element-container:has(#button-logout) {
+    display: none;
+}
+.element-container:has(#button-indicadores) {
+    display: none;
+}
+.element-container:has(#button-logout) + div button {
+    color: #F24B4B;
+    border-color: #F24B4B;
+}
+.element-container:has(#button-indicadores) + div button {
+    color: white;
+    border-color: black;
+}
+.element-container:has(#button-logout) + div button:active,
+.element-container:has(#button-logout) + div button:focus {
+    background-color: #F24B4B;
+    color: white;
+}
+.element-container:has(#button-indicadores) + div button:active,
+.element-container:has(#button-indicadores) + div button:focus {
+    background-color: black;
+    color: white;
+} */
+
+/* button[class*="logout"] {
+    color: #F24B4B;
+    border-color: #F24B4B;
+} */
+
+/* button[kind="secondary"] {
+    background-color: black;
+    color: white;
+}
+
+button[kind="secondary"]:hover {
+    background-color: black;
+    color: white;
+    border-color: black;
+}
+
+button[kind="secondary"]:active {
+    background-color: black;
+    color: white;
+    border-color: black;
+} */
+
+/* button[kind="secondary"]:active {
+    background-color: #F24B4B;
+    color: white;
+    border-color: #F24B4B
+} */

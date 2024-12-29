@@ -52,7 +52,7 @@ with col2:
     password = st.text_input(f"**Contraseña**", placeholder = "Contraseña", type = "password", max_chars = 50)
 
     flag = ""
-    if st.button("Iniciar sesión", type = 'primary', use_container_width = True):
+    if st.button("Iniciar sesión", type = 'secondary', use_container_width = True):
         if email == "":
             flag = "Debe ingresar su correo electrónico"
         elif password == "":
