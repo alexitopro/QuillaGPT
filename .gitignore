@@ -22,3 +22,6 @@ build/
 
 # API keys file
 .env
+
+# Secrets management
+./quilla-gpt/.streamlit/secrets.toml

@@ -13,3 +13,7 @@ sentence-transformers
 pinecone
 streamlit
 streamlit-lottie
+streamlit-authenticator
+mysqlclient
+SQLAlchemy
+pymysql
