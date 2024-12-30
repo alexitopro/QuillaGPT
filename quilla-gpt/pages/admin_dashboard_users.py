@@ -7,6 +7,14 @@ st.set_page_config(
     page_title = "QuillaGPT"
 )
 
+# st.markdown("""
+# <style>
+# 	[data-testid="stDecoration"] {
+# 		display: none;
+# 	}
+# </style>""",
+# unsafe_allow_html=True)
+
 #conexion en mysql
 conn = pymysql.connect(
     host=st.secrets["mysql"]["host"],
@@ -14,6 +22,28 @@ conn = pymysql.connect(
     password=st.secrets["mysql"]["password"],
     database=st.secrets["mysql"]["database"]
 )
+
+#inicializar lista de usuarios si no existe
+if "usuarios" not in st.session_state:
+    st.session_state["usuarios"] = []
+
+#funcion para habilitar usuarios
+def habilitar_usuarios():
+    if st.session_state["usuarios"]:
+        for usuario in st.session_state["usuarios"]:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE User SET active = 1 WHERE email = %s AND active = 0", (usuario,))
+            conn.commit()
+            st.toast("Solicitud procesada exitosamente", icon=":material/check:")
+
+#funcion para deshabilitar usuarios
+def deshabilitar_usuarios():
+    if st.session_state["usuarios"]:
+        for usuario in st.session_state["usuarios"]:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE User SET active = 0 WHERE email = %s AND active = 1 AND username != %s", (usuario, st.session_state["username"]))
+            conn.commit()
+            st.toast("Solicitud procesada exitosamente", icon=":material/check:")
 
 #cargar el archivo css y llamarla
 def cargar_css(file_path):
@@ -36,15 +66,17 @@ with col2:
 with col3:
     estado = st.selectbox("**Estado**", ["Todos", "Activo", "Inactivo"])
 with col4:
-    st.button("Habilitar usuarios", type="primary", use_container_width=True)
+    if st.button("Habilitar usuarios", type="primary", use_container_width=True):
+        habilitar_usuarios()
 with col5:
-    st.button("Deshabilitar usuarios", type="primary", use_container_width=True)
+    if st.button("Deshabilitar usuarios", type="primary", use_container_width=True):
+        deshabilitar_usuarios()
 
-#tabla
+#tabla de usuarios
 cursor = conn.cursor()
 query = """
     SELECT 
-        u.username AS 'Nombre de Usuario', 
+        u.username AS 'Nombre de usuario', 
         u.email AS 'Correo electrónico', 
         r.name AS 'Rol', 
         CASE WHEN u.active = 1 THEN 'Activo' ELSE 'Inactivo' END AS 'Estado'
@@ -65,23 +97,35 @@ data = cursor.fetchall()
 
 cursor.execute(query, values)
 data = cursor.fetchall()
-df = pd.DataFrame(data, columns = ['Nombre de Usuario', 'Correo electrónico', 'Rol', 'Estado'])
+df = pd.DataFrame(data, columns = ['Nombre de usuario', 'Correo electrónico', 'Rol', 'Estado'])
 df["Seleccionar"] = False
-df = df[['Seleccionar', 'Nombre de Usuario', 'Correo electrónico', 'Rol', 'Estado']]
+df = df[['Seleccionar', 'Nombre de usuario', 'Correo electrónico', 'Rol', 'Estado']]
 
-st.data_editor(
+selected = st.data_editor(
     data = df,
     column_config={
         "Seleccionar": st.column_config.CheckboxColumn(
-            "Seleccionar",
-            help="Seleccionar usuarios",
+            "",
+            help="Seleccionar usuarios que se desean habilitar o deshabilitar",
             default=False,
         )
     },
-    disabled=['Nombre de Usuario', 'Correo electrónico', 'Rol', 'Estado'],
+    disabled=['Nombre de usuario', 'Correo electrónico', 'Rol', 'Estado'],
     hide_index=True,
     use_container_width=True
 )
+
+#filtramos los usuarios seleccionados
+st.session_state["usuarios"] = [
+    row["Correo electrónico"]
+    for idx, row in selected.iterrows()
+    if row["Seleccionar"]
+]
+
+# if st.session_state["usuarios"]:
+#     st.write("Usuarios seleccionados:")
+    # for usuario in st.session_state["usuarios"]:
+    #     st.write(usuario)
 
 with st.sidebar:
     # cargar_css("./style.css")

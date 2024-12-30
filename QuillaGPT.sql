@@ -83,3 +83,9 @@ ALTER TABLE `RequestQuery` ADD FOREIGN KEY (`user_resolved_id`) REFERENCES `User
 INSERT INTO `User` (`role_id`, `email`, `username`, `password`, `active`) 
 VALUES 
 (1, 'admin@quillagpt.com', 'admin', SHA2('password123', 256), true);
+INSERT INTO `User` (`role_id`, `email`, `username`, `password`, `active`) 
+VALUES 
+(2, 'alexitopro@quillagpt.com', 'alexito', SHA2('123', 256), true);
+INSERT INTO `User` (`role_id`, `email`, `username`, `password`, `active`) 
+VALUES 
+(2, 'student@quillagpt.com', 'student', SHA2('123', 256), true);

@@ -8,6 +8,15 @@ st.set_page_config(
     page_title = "QuillaGPT"
 )
 
+#quitar la barra superior de streamlit
+# st.markdown("""
+# <style>
+# 	[data-testid="stDecoration"] {
+# 		display: none;
+# 	}
+# </style>""",
+# unsafe_allow_html=True)
+
 #conexion en mysql
 conn = pymysql.connect(
     host=st.secrets["mysql"]["host"],
