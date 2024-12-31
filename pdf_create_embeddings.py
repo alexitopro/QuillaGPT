@@ -1,6 +1,5 @@
 import os
 import re
-import time
 from pinecone import Pinecone, ServerlessSpec
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -70,7 +69,7 @@ def insertar_datos(data, embeddings):
     total_vectores = stats['total_vector_count']
     records = [
         {
-            "id": str(total_vectores + idx),
+            "id": f"GuiaPanda_{total_vectores + idx}",
             "values": embedding,
             "metadata": {"texto": d["text"], "fuente": d["source"], "pagina": d["page"]}
         }

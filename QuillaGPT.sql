@@ -46,11 +46,12 @@ CREATE TABLE `Role` (
 INSERT INTO `Role` (`name`, `description`, `active`) 
 VALUES 
 ('Administrador', 'Administrador de QuillaGPT', true),
-('Estudiante', 'Alumno de la Facultad de Ciencias e Ingeniería', true);
+('Estudiante', 'Alumno de la Facultad de Ciencias e Ingenieria', true);
 
 CREATE TABLE `File` (
   `file_id` integer PRIMARY KEY AUTO_INCREMENT,
-  `content` blob,
+  `content` mediumblob,
+  `type` varchar(255),
   `name` varchar(255),
   `register_date` date,
   `active` bool
