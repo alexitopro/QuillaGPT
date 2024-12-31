@@ -11,6 +11,19 @@ st.set_page_config(
     page_title = "QuillaGPT"
 )
 
+#esto es para que el header sea transparente y cuando se haga scroll no malogre
+st.markdown(
+    """
+    <style>
+        .stAppHeader {
+            background-color: rgba(255, 255, 255, 0.0);  /* Transparent background */
+            visibility: visible;  /* Ensure the header is visible */
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 #carga de spinner lottie
 def load_lottie_json(filepath: str):
     with open(filepath, "r") as f:
@@ -32,7 +45,7 @@ cargar_css("./style.css")
 
 container_inicio = st.container()
 container_inicio.write("")
-container_inicio.write("")
+# container_inicio.write("")
 container_inicio.title("Gestión de Conocimiento")
 
 tab1, tab2, tab3 = st.tabs(["Conocimiento inicial", "Conocimiento dinámico", "Instrucciones personalizadas"])
@@ -98,6 +111,41 @@ with tab2:
     st.dataframe(df, use_container_width=True, hide_index=True)
 
     st.subheader("Otros documentos")
+
+    st.write("QuillaGPT también puede utilizar otros documentos que consideres pertinentes. Sin embargo, recuerda lo siguiente:")
+
+    st.markdown("""
+    - Sólo se aceptan archivos en formato PDF.
+    - QuillaGPT solo podrá leer y procesar contenido textual. Si el documento contiene imágenes, gráficos u otros elementos visuales, estos no podrán ser utilizados como conocimiento, ya que el sistema solo puede extraer texto.
+    """)
+
+    
+    #uploader
+    document_other =  st.file_uploader("**Cargar otro documento**", type=["pdf"], key=st.session_state["uploader_key"] + 1)
+
+    if document_other is not None:
+
+        bytes_content = document_other.getvalue()
+        file_name = document_other.name
+        current_date = datetime.now().strftime('%y-%m-%d')
+
+    col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
+    with col1:
+        usuario = st.text_input("**Buscar documento**", placeholder="Ingrese el nombre del archivo", max_chars=100)
+    with col2:
+        st.button("Eliminar archivos seleccionados", type="primary", use_container_width=True)
+
+    query = """
+        SELECT 
+            name as 'Nombre de archivo',
+            register_date as 'Fecha de registro'
+        FROM File
+        WHERE type != 'GuiaConsultaPanda' AND active = 1
+    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+    df = pd.DataFrame(data, columns = ['Nombre de archivo', 'Fecha de registro'])
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 with st.sidebar:
     # cargar_css("./style.css")

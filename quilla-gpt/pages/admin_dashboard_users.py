@@ -58,7 +58,7 @@ container_inicio.write("")
 container_inicio.title("Gestión de Usuarios")
 
 #contenido
-col1, col2, col3, col4, col5 = st.columns([5, 2, 2, 2, 2], vertical_alignment="bottom")
+col1, col2, col3, col4, col5 = st.columns([2.5, 1.5, 1, 2.5, 2.5], vertical_alignment="bottom")
 with col1:
     usuario = st.text_input("**Buscar usuario**", placeholder="Ingrese el correo o nombre del usuario", max_chars=50)
 with col2:
@@ -66,10 +66,10 @@ with col2:
 with col3:
     estado = st.selectbox("**Estado**", ["Todos", "Activo", "Inactivo"])
 with col4:
-    if st.button("Habilitar usuarios", type="primary", use_container_width=True):
+    if st.button("Habilitar usuarios seleccionados", type="primary", use_container_width=True):
         habilitar_usuarios()
 with col5:
-    if st.button("Deshabilitar usuarios", type="primary", use_container_width=True):
+    if st.button("Deshabilitar usuarios seleccionados", type="primary", use_container_width=True):
         deshabilitar_usuarios()
 
 #tabla de usuarios
@@ -105,7 +105,7 @@ selected = st.data_editor(
     data = df,
     column_config={
         "Seleccionar": st.column_config.CheckboxColumn(
-            "",
+            "Seleccionar",
             help="Seleccionar usuarios que se desean habilitar o deshabilitar",
             default=False,
         )
