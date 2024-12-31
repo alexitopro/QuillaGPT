@@ -1,5 +1,8 @@
+[theme]
+base = "light"
 [client]
 toolbarMode = "minimal"
 showSidebarNavigation = false
 [server]
 enableStaticServing = true
+maxUploadSize = 10

@@ -1,8 +1,27 @@
+from guiapanda_embedding_process import procesar_arch_db
 import streamlit as st
+import pymysql
+import pandas as pd
+from datetime import datetime
+from streamlit_lottie import st_lottie_spinner
+import json
 
 st.set_page_config(
     layout = "wide",
     page_title = "QuillaGPT"
+)
+
+#carga de spinner lottie
+def load_lottie_json(filepath: str):
+    with open(filepath, "r") as f:
+        return json.load(f)
+
+#conexion en mysql
+conn = pymysql.connect(
+    host=st.secrets["mysql"]["host"],
+    user=st.secrets["mysql"]["username"],
+    password=st.secrets["mysql"]["password"],
+    database=st.secrets["mysql"]["database"]
 )
 
 #cargar el archivo css y llamarla
@@ -12,7 +31,73 @@ def cargar_css(file_path):
 cargar_css("./style.css")
 
 container_inicio = st.container()
+container_inicio.write("")
+container_inicio.write("")
 container_inicio.title("Gestión de Conocimiento")
+
+tab1, tab2, tab3 = st.tabs(["Conocimiento inicial", "Conocimiento dinámico", "Instrucciones personalizadas"])
+
+#conocimiento inicial
+with tab1:
+    st.write("QuillaGPT tiene en cuenta la información de los procesos académicos y administrativos disponibles públicamente en las siguientes páginas web:")
+    st.markdown("""
+    - https://sites.google.com/pucp.edu.pe/fci-pucp/estudiantes
+    - https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa
+    - https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/
+    """)
+
+#conocimiento dinamico
+with tab2:
+    st.subheader("Guía de consulta del Panda")
+    st.write("QuillaGPT utiliza la Guía del Panda del ciclo actual. Si observas que se está usando una guía de un ciclo anterior, sube el nuevo documento para reemplazar al actual. Recuerda que sólo se aceptan archivos en formato PDF.")
+    # #tabla de guia de consulta del panda
+    cursor = conn.cursor()
+
+    #esto es para no se vuelva a cargar
+    if "uploader_key" not in st.session_state:
+        st.session_state["uploader_key"] = 1
+    
+    #uploader
+    document =  st.file_uploader("**Cargar la Guía de Consulta del Panda**", type=["pdf"], key=st.session_state["uploader_key"])
+    if document is not None:
+
+        bytes_content = document.getvalue()
+        file_name = document.name
+        current_date = datetime.now().strftime('%y-%m-%d')
+
+        #eliminamos el archivo antiguo de guia de consulta panda
+        delete_query = "UPDATE File SET active = 0 WHERE type = 'GuiaConsultaPanda'"
+        cursor.execute(delete_query)
+
+        insert_query = """
+            INSERT INTO File (content, name, register_date, type, active)
+            VALUES (%s, %s, %s, %s, 1)
+        """
+        cursor.execute(insert_query, (bytes_content, file_name, current_date, 'GuiaConsultaPanda'))
+        conn.commit()
+
+        # st.success("El archivo ha sido cargado exitosamente y reemplazó el anterior")
+        st.toast("El archivo se ha cargado a la base de datos exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
+
+        #spinner mientras se actualiza en la vectorial bd
+        with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+            procesar_arch_db(document.name, document)
+            st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+            st.session_state["uploader_key"] += 1
+
+    query = """
+        SELECT 
+            name as 'Nombre de archivo',
+            register_date as 'Fecha de registro'
+        FROM File
+        WHERE type = 'GuiaConsultaPanda' AND active = 1
+    """
+    cursor.execute(query)
+    data = cursor.fetchall()
+    df = pd.DataFrame(data, columns = ['Nombre de archivo', 'Fecha de registro'])
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    st.subheader("Otros documentos")
 
 with st.sidebar:
     # cargar_css("./style.css")
@@ -29,6 +114,6 @@ with st.sidebar:
     if st.button("Reporte de Indicadores", use_container_width=True, type="secondary", icon=":material/bar_chart:"):
         st.switch_page("./pages/admin_dashboard_report.py")
 
-    if st.button("Cerrar sesión", use_container_width=True):
+    if st.button("Cerrar sesión", use_container_width=True, type="primary"):
         st.session_state["username"] = ""
         st.switch_page('main.py')
