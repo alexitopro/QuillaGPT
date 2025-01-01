@@ -44,7 +44,7 @@ context = "\n".join(retrieved_documents)
 completion = client.chat.completions.create(
     model="meta/llama-3.3-70b-instruct",
     messages=[
-        {"role": "system", "content": "Te llamas QuillaGPT y ayudas sobre procesos academico administrativos de la PUCP. Menciona sobre que fuente has sacado informacion y si es de la guia del panda menciona que pagina el usuario puede encontrar mas informacion. Asimismo, si hay algún link de interés, compártelo."},
+        {"role": "system", "content": "Te llamas QuillaGPT y ayudas sobre procesos academico administrativos de la PUCP. Menciona sobre que fuente has sacado informacion y si es de la guia del panda menciona que pagina el usuario puede encontrar mas informacion. Asimismo, si hay algun link de interes, compartelo."},
         {"role": "user", "content": query},
         {"role": "assistant", "content": context}  # Pass the context as part of the conversation
     ],

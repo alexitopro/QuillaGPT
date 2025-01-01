@@ -34,6 +34,7 @@ def habilitar_usuarios():
             cursor = conn.cursor()
             cursor.execute("UPDATE User SET active = 1 WHERE email = %s AND active = 0", (usuario,))
             conn.commit()
+            st.session_state["usuarios"] = []
             st.toast("Tus cambios han sido guardados exitosamente", icon=":material/check:")
 
 #funcion para deshabilitar usuarios
@@ -43,6 +44,7 @@ def deshabilitar_usuarios():
             cursor = conn.cursor()
             cursor.execute("UPDATE User SET active = 0 WHERE email = %s AND active = 1 AND username != %s", (usuario, st.session_state["username"]))
             conn.commit()
+            st.session_state["usuarios"] = []
             st.toast("Tus cambios han sido guardados exitosamente", icon=":material/check:")
 
 #cargar el archivo css y llamarla

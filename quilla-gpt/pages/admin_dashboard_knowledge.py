@@ -1,9 +1,9 @@
-from guiapanda_embedding_process import procesar_arch_db
+from document_embedding_process import procesar_arch_db
+from document_vectordb_deletion import eliminar_arch_db
 import streamlit as st
 import pymysql
 import pandas as pd
 from datetime import datetime
-from streamlit_lottie import st_lottie_spinner
 import json
 
 st.set_page_config(
@@ -23,11 +23,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-#carga de spinner lottie
-def load_lottie_json(filepath: str):
-    with open(filepath, "r") as f:
-        return json.load(f)
 
 #conexion en mysql
 conn = pymysql.connect(
@@ -69,6 +64,8 @@ with tab2:
     #esto es para no se vuelva a cargar
     if "uploader_key" not in st.session_state:
         st.session_state["uploader_key"] = 1
+    if "uploader_key_other" not in st.session_state:
+        st.session_state["uploader_key_other"] = []
     
     #uploader
     document =  st.file_uploader("**Cargar la Guía de Consulta del Panda**", type=["pdf"], key=st.session_state["uploader_key"])
@@ -94,7 +91,7 @@ with tab2:
 
         #spinner mientras se actualiza en la vectorial bd
         with st.spinner("Actualizando la base de datos de QuillaGPT..."):
-            procesar_arch_db(document.name, document)
+            procesar_arch_db(document.name, document, 'GuiaPanda_')
             st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
             st.session_state["uploader_key"] += 1
 
@@ -118,34 +115,152 @@ with tab2:
     - Sólo se aceptan archivos en formato PDF.
     - QuillaGPT solo podrá leer y procesar contenido textual. Si el documento contiene imágenes, gráficos u otros elementos visuales, estos no podrán ser utilizados como conocimiento, ya que el sistema solo puede extraer texto.
     """)
-
     
     #uploader
-    document_other =  st.file_uploader("**Cargar otro documento**", type=["pdf"], key=st.session_state["uploader_key"] + 1)
+    document_other =  st.file_uploader("**Cargar otro documento**", type=["pdf"], key=st.session_state["uploader_key_other"])
+    if "documents" not in st.session_state:
+        st.session_state["documents"] = []
 
-    if document_other is not None:
+    if document_other is not None and document_other.name not in st.session_state["documents"]:
 
         bytes_content = document_other.getvalue()
         file_name = document_other.name
         current_date = datetime.now().strftime('%y-%m-%d')
 
+        insert_query = """
+            INSERT INTO File (content, name, register_date, type, active)
+            VALUES (%s, %s, %s, %s, 1)
+        """
+        cursor.execute(insert_query, (bytes_content, file_name, current_date, 'DocumentoAdicional'))
+        conn.commit()
+
+        #obtenemos el id del archivo ingresado
+        query = "SELECT file_id FROM File WHERE name = %s AND type = 'DocumentoAdicional' AND active = 1"
+        cursor.execute(query, (file_name,))
+        file_id = cursor.fetchone()[0]
+
+        st.toast("El archivo se ha cargado a la base de datos exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
+
+        #spinner mientras se actualiza en la vectorial bd
+        with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+            procesar_arch_db(document_other.name, document_other, 'DocumentoAdicional_' + str(file_id) + '_')
+            st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+            st.session_state["documents"].append(document_other.name)
+
     col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
     with col1:
-        usuario = st.text_input("**Buscar documento**", placeholder="Ingrese el nombre del archivo", max_chars=100)
+        document_name = st.text_input("**Buscar documento**", placeholder="Ingrese el nombre del archivo", max_chars=100)
     with col2:
-        st.button("Eliminar archivos seleccionados", type="primary", use_container_width=True)
+        if st.button("Eliminar archivos seleccionados", type="primary", use_container_width=True):
+            if st.session_state["uploader_key_other"]:
+                for file_id in st.session_state["uploader_key_other"]:
+                    delete_query = "UPDATE File SET active = 0 WHERE file_id = %s"
+                    cursor.execute(delete_query, (file_id,))
+                    conn.commit()
+                st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
+                with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+                    for file_id in st.session_state["uploader_key_other"]:
+                        eliminar_arch_db('DocumentoAdicional_' + str(file_id) + '_')
+                    st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+                st.session_state["uploader_key_other"] = []
+            else:
+                st.toast("No se han seleccionado archivos para eliminar", icon=':material/error:')
 
     query = """
         SELECT 
+            file_id as 'ID',
             name as 'Nombre de archivo',
             register_date as 'Fecha de registro'
         FROM File
-        WHERE type != 'GuiaConsultaPanda' AND active = 1
+        WHERE type != 'GuiaConsultaPanda' AND active = 1 AND name LIKE %s
+    """
+    values = (f"%{document_name}%",)
+    cursor.execute(query, values)
+    data = cursor.fetchall()
+    df = pd.DataFrame(data, columns = ['ID', 'Nombre de archivo', 'Fecha de registro'])
+    df["Seleccionar"] = False
+    df = df[['Seleccionar', 'ID', 'Nombre de archivo', 'Fecha de registro']]
+
+    selected = st.data_editor(
+        data = df,
+        column_config={
+            "Seleccionar": st.column_config.CheckboxColumn(
+                "Seleccionar",
+                help="Seleccione los documentos que desea eliminar",
+                default=False,
+            )
+        },
+        disabled=['ID', 'Nombre de archivo', 'Fecha de registro'],
+        hide_index=True,
+        use_container_width=True
+    )
+
+    #filtramos los usuarios seleccionados
+    st.session_state["uploader_key_other"] = [
+        row["ID"]
+        for idx, row in selected.iterrows()
+        if row["Seleccionar"]
+    ]
+
+    # if st.session_state["usuarios"]:
+    # st.write("Archivos seleccionados:")
+    # for usuario in st.session_state["uploader_key_other"]:
+    #     st.write(usuario)
+
+with tab3:
+    if "disabled" not in st.session_state:
+        st.session_state["disabled"] = True
+    if "text" not in st.session_state:
+        st.session_state["text"] = ""
+    def disable_instructions():
+        st.session_state["disabled"] = not st.session_state["disabled"]
+
+    cursor = conn.cursor()
+    query = """
+        SELECT instruction
+        FROM CustomInstruction
+        WHERE active = 1
     """
     cursor.execute(query)
-    data = cursor.fetchall()
-    df = pd.DataFrame(data, columns = ['Nombre de archivo', 'Fecha de registro'])
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    data = cursor.fetchone()
+    if not st.session_state["text"] and data:
+        st.session_state["text"] = data[0]
+
+    def cancel_instructions():
+        st.session_state["text"] = data[0] if data else ""
+        disable_instructions()
+
+    def save_instructions(instrucciones):
+        if not st.session_state["disabled"]:
+            print(instrucciones)
+            if data:
+                query = """
+                    UPDATE CustomInstruction
+                    SET instruction = %s
+                    WHERE active = 1
+                """
+                cursor.execute(query, (instrucciones,))
+                conn.commit()
+            else:
+                insert_query = """
+                    INSERT INTO CustomInstruction (instruction, active)
+                    VALUES (%s, 1)
+                """
+                cursor.execute(insert_query, (instrucciones,))
+                conn.commit()
+            st.toast("Las instrucciones personalizadas se han guardado exitosamente", icon=":material/check:")
+            st.session_state.text = instrucciones
+        disable_instructions()
+
+    st.write("Las instrucciones personalizadas permiten compartir lo que quieras que QuillaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las  conversaciones nuevas que los estudiantes de la PUCP tengan con ella.")
+    instrucciones = st.text_area("**Instrucciones personalizadas**", height=200, max_chars=500, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], key = "text", label_visibility="collapsed", value=st.session_state["text"])
+
+    col1, col2, col3 = st.columns([8, 2, 2])
+    with col2:
+        if not st.session_state["disabled"]:
+            st.button("Cancelar" if st.session_state["disabled"] else "Cancelar instrucciones", type="secondary", on_click=cancel_instructions, use_container_width=True)
+    with col3:
+        st.button("Editar instrucciones" if st.session_state["disabled"] else "Guardar instrucciones", type="primary", on_click=save_instructions, use_container_width=True, args=(instrucciones, ))
 
 with st.sidebar:
     # cargar_css("./style.css")

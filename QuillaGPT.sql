@@ -58,8 +58,8 @@ CREATE TABLE `File` (
 );
 
 CREATE TABLE `CustomInstruction` (
-  `custom_instruction_id` integer PRIMARY KEY,
-  `instruction` varchar(255),
+  `custom_instruction_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `instruction` varchar(511),
   `active` bool
 );
 

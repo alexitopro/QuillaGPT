@@ -67,13 +67,13 @@ def crear_embeddings(texto):
     return embeddings
 
 #insertar datos en Pinecone
-def insertar_datos(data, embeddings, pc):
+def insertar_datos(data, embeddings, pc, tipo):
     index = pc.Index(index_name)
     stats = index.describe_index_stats(namespace = "quillagpt-index")
     total_vectores = stats['total_vector_count']
     records = [
         {
-            "id": f"GuiaPanda_{total_vectores + idx}",
+            "id": f"{tipo}{total_vectores + idx}",
             "values": embedding,
             "metadata": {"texto": d["text"], "fuente": d["source"], "pagina": d["page"]}
         }
@@ -86,7 +86,7 @@ def insertar_datos(data, embeddings, pc):
 # insertar_datos(texto, crear_embeddings(texto))
 
 #procesar el archivo pdf que se encuentra en la base de datos
-def procesar_arch_db(nombre_arch, arch):
+def procesar_arch_db(nombre_arch, arch, tipo):
     #guardar el documento en un archivo temporal
     archivo_temporal = nombre_arch
     with open(archivo_temporal, "wb") as f:
@@ -97,7 +97,7 @@ def procesar_arch_db(nombre_arch, arch):
 
     #borramos en Pinecone los datos anteriores de la Guia del Panda
     index = pc.Index(index_name)
-    for ids in index.list(prefix = 'GuiaPanda_', namespace = "quillagpt-namespace"):
+    for ids in index.list(prefix = tipo, namespace = "quillagpt-namespace"):
         index.delete(ids = ids, namespace = "quillagpt-namespace")
 
     #procesamos el archivo pdf y creamos los embeddings
@@ -105,7 +105,7 @@ def procesar_arch_db(nombre_arch, arch):
     embeddings = crear_embeddings(texto)
 
     #insertamos los datos
-    insertar_datos(texto, embeddings, pc)
+    insertar_datos(texto, embeddings, pc, tipo)
 
     #borramos el archivo temporal
     os.remove(archivo_temporal)
