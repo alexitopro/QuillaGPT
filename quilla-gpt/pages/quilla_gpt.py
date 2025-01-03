@@ -10,6 +10,7 @@ from pinecone import Pinecone
 from dotenv import load_dotenv
 from openai import OpenAI
 from streamlit_lottie import st_lottie_spinner
+from typing import Literal
 
 #inicializar las variables de entorno
 load_dotenv()
@@ -29,6 +30,63 @@ st.set_page_config(
     layout = "wide",
     page_title = "QuillaGPT"
 )
+
+#funcion para eliminar conversaciones
+def delete_conversations():
+    cursor = conn.cursor()
+    query = """
+        UPDATE Session
+        SET active = 0
+        WHERE user_id = (SELECT user_id FROM User WHERE username = %s)
+    """
+    cursor.execute(query, st.session_state["username"])
+    conn.commit()
+    st.session_state.messages = []
+    st.session_state.current_session_id = None
+    st.session_state.sessions_updated = True
+
+#modal para la configuracion del usuario
+@st.dialog("Configuración del usuario")
+def config_user():
+    tab1, tab2 = st.tabs(["Configuración del perfil", "Conversaciones"])
+    with tab2:
+        if st.button("Eliminar todas mis conversaciones", type="primary", on_click=delete_conversations):
+            st.rerun()
+
+#esto es para el sticky del titulo de la conversacion
+MARGINS = {
+    "top": "2.875rem",
+    "bottom": "0",
+}
+STICKY_CONTAINER_HTML = """
+<style>
+div[data-testid="stVerticalBlock"] div:has(div.fixed-header-{i}) {{
+    position: sticky;
+    {position}: {margin};
+    background-color: white;
+    z-index: 999;
+}}
+</style>
+<div class='fixed-header-{i}'/>
+""".strip()
+count = 0
+def sticky_container(
+    *,
+    height: int | None = None,
+    border: bool | None = None,
+    mode: Literal["top", "bottom"] = "top",
+    margin: str | None = None,
+):
+    if margin is None:
+        margin = MARGINS[mode]
+
+    global count
+    html_code = STICKY_CONTAINER_HTML.format(position=mode, margin=margin, i=count)
+    count += 1
+
+    container = st.container(height=height, border=border)
+    container.markdown(html_code, unsafe_allow_html=True)
+    return container
 
 #esto es para icono de plus de añadir conversacion
 st.markdown(
@@ -75,11 +133,14 @@ if "session_new" not in st.session_state:
 #container de inicio
 container_inicio = st.container()
 # container_inicio.write("")
-container_inicio.write("")
-container_inicio.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
-container_inicio.write(
-    "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
-)
+with container_inicio:
+    with sticky_container(mode="top", border=False):
+        # st.write("")
+        st.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
+        st.write(
+            "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
+        )
+        st.write("")
 
 # Fixed container for chat messages
 chat_container = st.container()
@@ -192,6 +253,16 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
         feedback = st.feedback("thumbs")
 
     #insertar el mensaje del asistente en la base de datos
+
+    #ACA LO QUE QUEDA PENDIENTE ES AGREGAR UNA NUEVA TABLA
+    #EN ESA TABLA VAMOS A GUARDAR EL TEMA DE LA CONVERSACION
+    #PONTE QUE EL USUARIO PREGUNTA POR MATRICULA
+    #ENTONCES LA TABLA TENDRA SESION 1 - TEMA MATRICULA
+    #SI INGRESA UNA NUEVA PREGUNTA ENTONCES REVISA SI ES UN TEMA DIFERENTE
+    #SI ES UN TEMA DIFERENTE ENTONCES SERIA SESINO 1 - TEMA RETIRO DE CURSOS
+    #SI ES EL MISMO TEMA ENTONCES NO SE AGREGA EN LA TABLA Y SE DEBE GUARDAR TAMBIEN LAS FECHAS DEL TEMA
+    #PARA PODER HACER REPORTERIA
+
     cursor = conn.cursor()
     query = """
         INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
@@ -229,7 +300,7 @@ with st.sidebar:
         ):
             st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
             if st.button(''):
-                print("Funciona!")
+                st.session_state.messages = []
 
     cursor = conn.cursor()
     query = """
@@ -241,21 +312,30 @@ with st.sidebar:
     """
     cursor.execute(query, st.session_state["username"])
     sessions = cursor.fetchall()
-    for session in sessions:
-        if st.button(session[0], use_container_width = True, type="secondary"):
-            # print("Se dio click en session: " + session[0])
-            query = """
-                SELECT role, content
-                FROM Message
-                WHERE session_id = %s AND active = 1
-            """
-            cursor.execute(query, session[1])
-            messages = cursor.fetchall()
-            st.session_state.messages = []
-            for message in messages:
-                st.session_state.messages.append({"role": message[0], "content": message[1]})
-                # print(message[0], message[1])
-            st.session_state.current_session_id = session[1]
+    if not sessions:
+        st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de +.")
+    else:
+        for session in sessions:
+            if st.button(session[0], use_container_width = True, type="secondary"):
+                # print("Se dio click en session: " + session[0])
+                query = """
+                    SELECT role, content
+                    FROM Message
+                    WHERE session_id = %s AND active = 1
+                """
+                cursor.execute(query, session[1])
+                messages = cursor.fetchall()
+                st.session_state.messages = []
+                for message in messages:
+                    st.session_state.messages.append({"role": message[0], "content": message[1]})
+                    # print(message[0], message[1])
+                st.session_state.current_session_id = session[1]
+    st.header("Opciones")
+    if st.button("Configuración del usuario", use_container_width=True, icon=":material/settings:"):
+        config_user()
+    if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
+        st.session_state["username"] = ""
+        st.switch_page('main.py')
 
 # #mostrar los mensajes del historial
 with chat_container:
