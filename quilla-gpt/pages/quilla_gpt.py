@@ -3,6 +3,8 @@ import base64
 import os
 import json
 import pymysql
+import hashlib
+import time
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
 from streamlit_extras.stylable_container import stylable_container
@@ -49,6 +51,66 @@ def delete_conversations():
 @st.dialog("Configuración del usuario")
 def config_user():
     tab1, tab2 = st.tabs(["Configuración del perfil", "Conversaciones"])
+    with tab1:
+        with st.form("Perfil del usuario", border=False, enter_to_submit=True):
+            st.text_input("**Nombre de usuario**", value=st.session_state["username"], disabled=True)
+            nueva_contra = st.text_input("**Cambiar contraseña**", placeholder="Nueva contraseña", type="password")
+            repetir_contra = st.text_input(" ", placeholder="Repetir nueva contraseña", type="password", label_visibility="collapsed")
+            actual_contra = st.text_input(" ", placeholder="Contraseña actual", type="password", label_visibility="collapsed")
+
+            col1, col2 = st.columns([3, 2])
+            with col2:
+                submitted = st.form_submit_button("Guardar cambios", use_container_width=True, type="primary")
+                #validar los campos ingresados
+            flag = ""
+            if submitted:
+                if not nueva_contra:
+                    flag = "Debes ingresar tu nueva contraseña."
+                elif not repetir_contra:
+                    flag = "Debes repetir tu nueva contraseña."
+                elif not actual_contra:
+                    flag = "Debes ingresar tu contraseña actual."
+                elif nueva_contra != repetir_contra:
+                    flag = "Las contraseñas ingresadas no coinciden."
+                #contraseña debe tener por lo menos 8 caracteres, una mayuscula, una minuscula y un número
+                elif not any(char.isupper() for char in nueva_contra):
+                    flag = "La contraseña debe tener por lo menos una letra mayúscula."
+                elif not any(char.islower() for char in nueva_contra):
+                    flag = "La contraseña debe tener por lo menos una letra minúscula."
+                elif not any(char.isdigit() for char in nueva_contra):
+                    flag = "La contraseña debe tener por lo menos un número."
+                else:
+                    cursor = conn.cursor()
+                    query = """
+                        SELECT password
+                        FROM User
+                        WHERE username = %s
+                        AND active = 1
+                    """
+                    cursor.execute(query, st.session_state["username"])
+                    contra_hasheada = cursor.fetchone()[0]
+                    actual_contra_hasheada = hashlib.sha256(actual_contra.encode()).hexdigest()
+                    if contra_hasheada != actual_contra_hasheada:
+                        flag = "La contraseña actual ingresada es incorrecta."
+                    else:
+                        nueva_contra_hasheada = hashlib.sha256(nueva_contra.encode()).hexdigest()
+                        query = """
+                            UPDATE User
+                            SET password = %s
+                            WHERE username = %s
+                            AND active = 1
+                        """
+                        cursor.execute(query, (nueva_contra_hasheada, st.session_state["username"]))
+                        conn.commit()
+                        bandera = st.success("Tus cambios han sido guardados correctamente.")
+                        time.sleep(4)
+                        bandera.empty()
+                        st.rerun()
+                if flag:
+                    error = st.error(flag)
+                    time.sleep(4)
+                    error.empty()
+                    
     with tab2:
         if st.button("Eliminar todas mis conversaciones", type="primary", on_click=delete_conversations):
             st.rerun()
@@ -142,7 +204,7 @@ with container_inicio:
         )
         st.write("")
 
-# Fixed container for chat messages
+#contenedor para los mensajes de chat
 chat_container = st.container()
 
 #entrada de texto del usuario
@@ -313,7 +375,7 @@ with st.sidebar:
     cursor.execute(query, st.session_state["username"])
     sessions = cursor.fetchall()
     if not sessions:
-        st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de +.")
+        st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de + o ingresa directamente tu consulta en la entrada de chat de la pantalla principal.")
     else:
         for session in sessions:
             if st.button(session[0], use_container_width = True, type="secondary"):
