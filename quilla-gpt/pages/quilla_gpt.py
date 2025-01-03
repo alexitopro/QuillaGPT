@@ -54,7 +54,7 @@ def config_user():
     with tab1:
         with st.form("Perfil del usuario", border=False, enter_to_submit=True):
             st.text_input("**Nombre de usuario**", value=st.session_state["username"], disabled=True)
-            nueva_contra = st.text_input("**Cambiar contraseña**", placeholder="Nueva contraseña", type="password")
+            nueva_contra = st.text_input("**Cambiar contraseña**", placeholder="Nueva contraseña", type="password", help="La contraseña debe tener por lo menos 8 caracteres, una mayúscula, una minúscula y un número.")
             repetir_contra = st.text_input(" ", placeholder="Repetir nueva contraseña", type="password", label_visibility="collapsed")
             actual_contra = st.text_input(" ", placeholder="Contraseña actual", type="password", label_visibility="collapsed")
 
