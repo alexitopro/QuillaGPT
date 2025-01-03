@@ -9,7 +9,6 @@ DROP TABLE IF EXISTS `Role`;
 CREATE TABLE `Session` (
   `session_id` integer PRIMARY KEY AUTO_INCREMENT,
   `start_session` timestamp DEFAULT (now()),
-  `end_session` timestamp,
   `user_id` integer,
   `title` varchar(255),
   `active` bool
@@ -23,7 +22,7 @@ CREATE TABLE `Message` (
   `role` varchar(255) COMMENT 'user or assistant',
   `positive` bool COMMENT 'positive (true) or negative (false)',
   `derived` bool COMMENT 'requested as question to admin or not',
-  `content` varchar(255),
+  `content` TEXT COMMENT 'holds the content of the message',
   `active` bool
 );
 

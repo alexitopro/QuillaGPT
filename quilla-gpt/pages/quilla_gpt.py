@@ -2,7 +2,10 @@ import streamlit as st
 import base64
 import os
 import json
+import pymysql
+from datetime import datetime
 from sentence_transformers import SentenceTransformer
+from streamlit_extras.stylable_container import stylable_container
 from pinecone import Pinecone
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -27,6 +30,20 @@ st.set_page_config(
     page_title = "QuillaGPT"
 )
 
+#esto es para icono de plus de añadir conversacion
+st.markdown(
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>',
+    unsafe_allow_html=True,
+)
+
+#conexion en mysql
+conn = pymysql.connect(
+    host=st.secrets["mysql"]["host"],
+    user=st.secrets["mysql"]["username"],
+    password=st.secrets["mysql"]["password"],
+    database=st.secrets["mysql"]["database"]
+)
+
 #cargar el archivo css y llamarla
 def cargar_css(file_path):
     with open(file_path, "r") as f:
@@ -44,54 +61,81 @@ def load_lottie_json(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
 
-#barra lateral
-with st.sidebar:
-    st.markdown(
-        f"""
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <h1 style="margin: 0;">Mis conversaciones</h1>
-            <a href="#" style="text-decoration: none;"">
-                <img src="data:image/png;base64,{plus_icon}" width="30" style="cursor: pointer;" />
-            </a>
-        </div>
-        """,
-        unsafe_allow_html = True
-    )
+#inicializar historial de mensajes
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "current_session_id" not in st.session_state:
+    st.session_state.current_session_id = None
+
+if "session_new" not in st.session_state:
+    st.session_state.session_new = False
+
 
 #container de inicio
 container_inicio = st.container()
+# container_inicio.write("")
+container_inicio.write("")
 container_inicio.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
 container_inicio.write(
     "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
 )
 
-#inicializar historial de mensajes
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-#mostrar los mensajes del historial
-for message in st.session_state.messages:
-    if message["role"] == "assistant":
-        with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
-            st.markdown(message["content"])
-    else:
-        div = f"""
-        <div class = "chat-row row-reverse">
-            <img src = "app/static/profile-account.png" width=40 height=40>
-            <div class = "user-message">{message["content"]}</div>
-        </div>"""
-        st.markdown(div, unsafe_allow_html=True)
+# Fixed container for chat messages
+chat_container = st.container()
 
 #entrada de texto del usuario
 if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
+
+    if st.session_state.messages == []:
+        #generamos el titulo de la session
+        response = cliente.chat.completions.create(
+            model="meta/llama-3.3-70b-instruct",
+            messages=[
+                {"role": "system", "content": "Te llamas QuillaGPT y ayudas sobre procesos academico administrativos de la PUCP. Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.2,
+            top_p=0.7,
+            max_tokens=8192,
+            stream=False
+        )
+        titulo = response.choices[0].message.content
+        titulo = titulo.replace('"', "")
+        cursor = conn.cursor()
+        query = """
+            SELECT user_id
+            FROM User
+            WHERE username = %s AND active = 1
+        """
+        cursor.execute(query, st.session_state["username"])
+        user_id = cursor.fetchone()[0]
+        #insertar la nueva session en la base de datos
+        query = """
+            INSERT INTO Session (start_session, user_id, title, active)
+            VALUES (%s, %s, %s, 1)
+        """
+        cursor.execute(query, (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), user_id, titulo))
+        conn.commit()
+        #obtener el id de la session
+        session_id = cursor.lastrowid
+        st.session_state.current_session_id = session_id
+        #activamos la nueva session
+        st.session_state.session_new = True
+
+    #insertar el mensaje del usuario en la base de datos
+    cursor = conn.cursor()
+    query = """
+        INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
+        VALUES (%s, %s, %s, 'user', %s, 1)
+    """
+    cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), prompt))
+    conn.commit()
 
     #preparar el historial de conversacion
     conversacion = []
     for message in st.session_state.messages:
         conversacion.append({"role": message["role"], "content": message["content"]})
-
-    #anexar mensaje de usuario al historial
-    st.session_state.messages.append({"role": "user", "content": prompt})
 
     #mostrar la respuesta del usuario
     div = f"""
@@ -146,4 +190,83 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
             )
         response = st.write_stream(stream)
         feedback = st.feedback("thumbs")
-    st.session_state.messages.append({"role": "assistant", "content": response})
+
+    #insertar el mensaje del asistente en la base de datos
+    cursor = conn.cursor()
+    query = """
+        INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
+        VALUES (%s, %s, %s, 'assistant', %s, 1)
+    """
+    cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), response))
+    conn.commit()
+
+#barra lateral
+with st.sidebar:
+    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+
+    col1, col2 = st.columns([5, 1], vertical_alignment="center")
+    with col1:
+        st.header("Mis conversaciones")
+    with col2:
+        #cargar el icono de agregar nueva conversacion
+        with stylable_container(
+            key="container_with_border",
+            css_styles=r"""
+                .element-container:has(#button-after) + div button {
+                    border: none;
+                    background: none;
+                    padding: 0;
+                    cursor: pointer;
+                    font-family: 'Material Icons';
+                    font-size: 35px;
+                }
+                .element-container:has(#button-after) + div button::before {
+                    content: 'add_circle';
+                    display: inline-block;
+                    padding-right: 3px;
+                }
+                """,
+        ):
+            st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
+            if st.button(''):
+                print("Funciona!")
+
+    cursor = conn.cursor()
+    query = """
+        SELECT title, session_id
+        FROM Session s
+        JOIN User u ON s.user_id = u.user_id
+        WHERE u.username = %s AND s.active = 1
+        ORDER BY start_session DESC
+    """
+    cursor.execute(query, st.session_state["username"])
+    sessions = cursor.fetchall()
+    for session in sessions:
+        if st.button(session[0], use_container_width = True, type="secondary"):
+            # print("Se dio click en session: " + session[0])
+            query = """
+                SELECT role, content
+                FROM Message
+                WHERE session_id = %s AND active = 1
+            """
+            cursor.execute(query, session[1])
+            messages = cursor.fetchall()
+            st.session_state.messages = []
+            for message in messages:
+                st.session_state.messages.append({"role": message[0], "content": message[1]})
+                # print(message[0], message[1])
+            st.session_state.current_session_id = session[1]
+
+# #mostrar los mensajes del historial
+with chat_container:
+    for message in st.session_state.messages:
+        if message["role"] == "assistant":
+            with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
+                st.markdown(message["content"])
+        else:
+            div = f"""
+            <div class = "chat-row row-reverse">
+                <img src = "app/static/profile-account.png" width=40 height=40>
+                <div class = "user-message">{message["content"]}</div>
+            </div>"""
+            st.markdown(div, unsafe_allow_html=True)

@@ -4,7 +4,6 @@ import streamlit as st
 import pymysql
 import pandas as pd
 from datetime import datetime
-import json
 
 st.set_page_config(
     layout = "wide",
