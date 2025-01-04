@@ -79,6 +79,8 @@ def config_user():
                     flag = "La contraseña debe tener por lo menos una letra minúscula."
                 elif not any(char.isdigit() for char in nueva_contra):
                     flag = "La contraseña debe tener por lo menos un número."
+                elif len(nueva_contra) < 8:
+                    flag = "La contraseña debe tener por lo menos 8 caracteres."
                 else:
                     cursor = conn.cursor()
                     query = """
