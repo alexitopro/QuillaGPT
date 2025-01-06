@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS `Message`;
+DROP TABLE IF EXISTS `SessionClassification`;
 DROP TABLE IF EXISTS `Session`;
 DROP TABLE IF EXISTS `CustomInstruction`;
 DROP TABLE IF EXISTS `File`;
@@ -17,7 +18,7 @@ CREATE TABLE `Session` (
 CREATE TABLE `SessionClassification` (
   `session_classification_id` integer PRIMARY KEY AUTO_INCREMENT,
   `session_id` integer,
-  `timestamp` timestamp DEFAULT (now),
+  `timestamp` timestamp DEFAULT (now()),
   `classification` varchar(255) COMMENT 'classification of the session in the moment',
   `active` bool
 );
@@ -30,6 +31,7 @@ CREATE TABLE `Message` (
   `role` varchar(255) COMMENT 'user or assistant',
   `positive` bool COMMENT 'positive (true) or negative (false)',
   `derived` bool COMMENT 'requested as question to admin or not',
+  `classification` varchar(255) COMMENT 'classification of the session in the moment',
   `content` TEXT COMMENT 'holds the content of the message',
   `active` bool
 );
@@ -66,7 +68,7 @@ CREATE TABLE `File` (
 
 CREATE TABLE `CustomInstruction` (
   `custom_instruction_id` integer PRIMARY KEY AUTO_INCREMENT,
-  `instruction` varchar(511),
+  `instruction` TEXT,
   `active` bool
 );
 
@@ -99,3 +101,6 @@ VALUES
 INSERT INTO `User` (`role_id`, `email`, `username`, `password`, `active`) 
 VALUES 
 (2, 'student@quillagpt.com', 'student', SHA2('123', 256), true);
+INSERT INTO `CustomInstruction` (`instruction`, `active`)
+VALUES 
+('Te llamas QuillaGPT y ayudas sobre procesos académico-administrativos de la PUCP. Menciona sobre qué fuente has sacado información y, si es de la guía del panda, menciona en qué página el usuario puede encontrar más información. Asimismo, si hay algún link de interés, compártelo. Si no encuentras información relacionada, puedes decir que no tienes información acerca de ello', true);

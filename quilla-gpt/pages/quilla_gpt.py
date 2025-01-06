@@ -166,6 +166,16 @@ conn = pymysql.connect(
     database=st.secrets["mysql"]["database"]
 )
 
+#cargar las instrucciones personalizadas
+cursor = conn.cursor()
+query = """
+    SELECT instruction
+    FROM CustomInstruction
+    WHERE active = 1
+"""
+cursor.execute(query)
+customInstruction = cursor.fetchone()[0]
+
 #cargar el archivo css y llamarla
 def cargar_css(file_path):
     with open(file_path, "r") as f:
@@ -316,24 +326,50 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
         response = st.write_stream(stream)
         feedback = st.feedback("thumbs")
 
-    #insertar el mensaje del asistente en la base de datos
-
-    #ACA LO QUE QUEDA PENDIENTE ES AGREGAR UNA NUEVA TABLA
-    #EN ESA TABLA VAMOS A GUARDAR EL TEMA DE LA CONVERSACION
-    #PONTE QUE EL USUARIO PREGUNTA POR MATRICULA
-    #ENTONCES LA TABLA TENDRA SESION 1 - TEMA MATRICULA
-    #SI INGRESA UNA NUEVA PREGUNTA ENTONCES REVISA SI ES UN TEMA DIFERENTE
-    #SI ES UN TEMA DIFERENTE ENTONCES SERIA SESINO 1 - TEMA RETIRO DE CURSOS
-    #SI ES EL MISMO TEMA ENTONCES NO SE AGREGA EN LA TABLA Y SE DEBE GUARDAR TAMBIEN LAS FECHAS DEL TEMA
-    #PARA PODER HACER REPORTERIA
+    #identificamos el tema del mensaje
+    tema_response = cliente.chat.completions.create(
+        model="meta/llama-3.3-70b-instruct",
+        messages=[
+            {"role": "system", "content": "Clasifica la consulta del usuario en uno de los siguientes temas: Cambio de especialidad, Certificado de notas, Convalidación de cursos, Duplicado de carné universitario, Matrícula, Obtención del título profesional, Pago para trámites académicos no presenciales, Reconocimiento de cursos, Registro histórico de notas, Reincorporación, Retiro de cursos, Solicitud de constancias a la OCR, Transferencia interna, Verificación de grados y/o títulos. Responde únicamente con el tema correspondiente y si no tiene relación con ninguno de los mencionados, por defecto es Otros."},
+            {"role": "user", "content": prompt},
+        ],
+        temperature=0.2,
+        top_p=0.7,
+        max_tokens=8192,
+        stream=False
+    )
+    tema = tema_response.choices[0].message.content
+    tema = tema.replace('"', "")
 
     cursor = conn.cursor()
     query = """
-        INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
-        VALUES (%s, %s, %s, 'assistant', %s, 1)
+        INSERT INTO Message (session_id, timestamp, register_date, role, content, classification, active)
+        VALUES (%s, %s, %s, 'assistant', %s, %s, 1)
     """
-    cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), response))
+    cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), response, tema))
     conn.commit()
+
+    #insertar el tema en la base de datos o actualizar el timestamp si es que ya existe
+    cursor = conn.cursor()
+    query_upsert = """
+        INSERT INTO SessionClassification (timestamp, session_id, classification, active)
+        VALUES (%s, %s, %s, 1)
+        ON DUPLICATE KEY UPDATE timestamp = %s
+    """
+    cursor.execute(
+        query_upsert,
+        (
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            st.session_state.current_session_id,
+            tema,
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
+    )
+    conn.commit()
+
+    #actualizar el historial de mensajes
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.messages.append({"role": "assistant", "content": response})
 
 #barra lateral
 with st.sidebar:
