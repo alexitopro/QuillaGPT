@@ -282,9 +282,6 @@ with st.sidebar:
         st.switch_page('main.py')
 
 #contenedor para los mensajes de chat
-# print("El id de la session actual es: " + str(st.session_state.current_session_id))
-# print("El historial de mensajes es: ")
-# print(st.session_state.messages)
 for message in st.session_state.messages:
     if message["role"] == "assistant":
         with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
@@ -449,3 +446,7 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
     #actualizar el historial de mensajes
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+    if st.session_state.session_new:
+        st.session_state.session_new = False
+        st.rerun()
