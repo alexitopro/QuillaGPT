@@ -14,6 +14,14 @@ CREATE TABLE `Session` (
   `active` bool
 );
 
+CREATE TABLE `SessionClassification` (
+  `session_classification_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `session_id` integer,
+  `timestamp` timestamp DEFAULT (now),
+  `classification` varchar(255) COMMENT 'classification of the session in the moment',
+  `active` bool
+);
+
 CREATE TABLE `Message` (
   `message_id` integer PRIMARY KEY AUTO_INCREMENT,
   `session_id` integer,
@@ -79,6 +87,8 @@ ALTER TABLE `Session` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
 ALTER TABLE `User` ADD FOREIGN KEY (`role_id`) REFERENCES `Role` (`role_id`);
 
 ALTER TABLE `RequestQuery` ADD FOREIGN KEY (`user_resolved_id`) REFERENCES `User` (`user_id`);
+
+ALTER TABLE `SessionClassification` ADD FOREIGN KEY (`session_id`) REFERENCES `Session` (`session_id`);
 
 INSERT INTO `User` (`role_id`, `email`, `username`, `password`, `active`) 
 VALUES 
