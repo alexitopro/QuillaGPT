@@ -447,6 +447,7 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.session_state.messages.append({"role": "assistant", "content": response})
 
+    #reiniciamos el sidebar para actualizar con la nueva conversacion
     if st.session_state.session_new:
         st.session_state.session_new = False
         st.rerun()
