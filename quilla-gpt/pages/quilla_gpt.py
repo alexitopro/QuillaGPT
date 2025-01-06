@@ -216,8 +216,87 @@ with container_inicio:
         )
         st.write("")
 
+#barra lateral
+with st.sidebar:
+    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+
+    col1, col2 = st.columns([5, 1], vertical_alignment="center")
+    with col1:
+        st.header("Mis conversaciones")
+    with col2:
+        #cargar el icono de agregar nueva conversacion
+        with stylable_container(
+            key="container_with_border",
+            css_styles=r"""
+                .element-container:has(#button-after) + div button {
+                    border: none;
+                    background: none;
+                    padding: 0;
+                    cursor: pointer;
+                    font-family: 'Material Icons';
+                    font-size: 35px;
+                }
+                .element-container:has(#button-after) + div button::before {
+                    content: 'add_circle';
+                    display: inline-block;
+                    padding-right: 3px;
+                }
+                """,
+        ):
+            st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
+            if st.button(''):
+                st.session_state.messages = []
+
+    cursor = conn.cursor()
+    query = """
+        SELECT title, session_id
+        FROM Session s
+        JOIN User u ON s.user_id = u.user_id
+        WHERE u.username = %s AND s.active = 1
+        ORDER BY start_session DESC
+    """
+    cursor.execute(query, st.session_state["username"])
+    sessions = cursor.fetchall()
+    if not sessions:
+        st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de + o ingresa directamente tu consulta en la entrada de chat de la pantalla principal.")
+    else:
+        for session in sessions:
+            if st.button(session[0], use_container_width = True, type="secondary"):
+                # print("Se dio click en session: " + session[0] + " con ID: " + str(session[1]))
+                query = """
+                    SELECT role, content
+                    FROM Message
+                    WHERE session_id = %s AND active = 1
+                """
+                cursor.execute(query, session[1])
+                messages = cursor.fetchall()
+                st.session_state.messages = []
+                for message in messages:
+                    st.session_state.messages.append({"role": message[0], "content": message[1]})
+                st.session_state.current_session_id = session[1]
+    st.header("Opciones")
+    if st.button("Configuración del usuario", use_container_width=True, icon=":material/settings:"):
+        config_user()
+    if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
+        st.session_state["username"] = ""
+        st.switch_page('main.py')
+
 #contenedor para los mensajes de chat
-chat_container = st.container()
+# print("El id de la session actual es: " + str(st.session_state.current_session_id))
+# print("El historial de mensajes es: ")
+# print(st.session_state.messages)
+for message in st.session_state.messages:
+    if message["role"] == "assistant":
+        with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
+            st.empty()
+            st.markdown(message["content"])
+    else:
+        div = f"""
+        <div class = "chat-row row-reverse">
+            <img src = "app/static/profile-account.png" width=40 height=40>
+            <div class = "user-message">{message["content"]}</div>
+        </div>"""
+        st.markdown(div, unsafe_allow_html=True)
 
 #entrada de texto del usuario
 if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
@@ -370,83 +449,3 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
     #actualizar el historial de mensajes
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.session_state.messages.append({"role": "assistant", "content": response})
-
-#barra lateral
-with st.sidebar:
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
-
-    col1, col2 = st.columns([5, 1], vertical_alignment="center")
-    with col1:
-        st.header("Mis conversaciones")
-    with col2:
-        #cargar el icono de agregar nueva conversacion
-        with stylable_container(
-            key="container_with_border",
-            css_styles=r"""
-                .element-container:has(#button-after) + div button {
-                    border: none;
-                    background: none;
-                    padding: 0;
-                    cursor: pointer;
-                    font-family: 'Material Icons';
-                    font-size: 35px;
-                }
-                .element-container:has(#button-after) + div button::before {
-                    content: 'add_circle';
-                    display: inline-block;
-                    padding-right: 3px;
-                }
-                """,
-        ):
-            st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
-            if st.button(''):
-                st.session_state.messages = []
-
-    cursor = conn.cursor()
-    query = """
-        SELECT title, session_id
-        FROM Session s
-        JOIN User u ON s.user_id = u.user_id
-        WHERE u.username = %s AND s.active = 1
-        ORDER BY start_session DESC
-    """
-    cursor.execute(query, st.session_state["username"])
-    sessions = cursor.fetchall()
-    if not sessions:
-        st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de + o ingresa directamente tu consulta en la entrada de chat de la pantalla principal.")
-    else:
-        for session in sessions:
-            if st.button(session[0], use_container_width = True, type="secondary"):
-                # print("Se dio click en session: " + session[0])
-                query = """
-                    SELECT role, content
-                    FROM Message
-                    WHERE session_id = %s AND active = 1
-                """
-                cursor.execute(query, session[1])
-                messages = cursor.fetchall()
-                st.session_state.messages = []
-                for message in messages:
-                    st.session_state.messages.append({"role": message[0], "content": message[1]})
-                    # print(message[0], message[1])
-                st.session_state.current_session_id = session[1]
-    st.header("Opciones")
-    if st.button("Configuración del usuario", use_container_width=True, icon=":material/settings:"):
-        config_user()
-    if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
-        st.session_state["username"] = ""
-        st.switch_page('main.py')
-
-# #mostrar los mensajes del historial
-with chat_container:
-    for message in st.session_state.messages:
-        if message["role"] == "assistant":
-            with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
-                st.markdown(message["content"])
-        else:
-            div = f"""
-            <div class = "chat-row row-reverse">
-                <img src = "app/static/profile-account.png" width=40 height=40>
-                <div class = "user-message">{message["content"]}</div>
-            </div>"""
-            st.markdown(div, unsafe_allow_html=True)
