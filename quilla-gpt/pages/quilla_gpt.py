@@ -261,7 +261,7 @@ with st.sidebar:
         st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de + o ingresa directamente tu consulta en la entrada de chat de la pantalla principal.")
     else:
         for session in sessions:
-            if st.button(session[0], use_container_width = True, type="secondary"):
+            if st.button(session[0], use_container_width = True, type="secondary", key=session[1]):
                 # print("Se dio click en session: " + session[0] + " con ID: " + str(session[1]))
                 query = """
                     SELECT role, content
