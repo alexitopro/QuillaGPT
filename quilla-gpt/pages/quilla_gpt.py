@@ -8,6 +8,8 @@ import time
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
 from streamlit_extras.stylable_container import stylable_container
+# from streamlit_feedback import streamlit_feedback
+from uuid import uuid4
 from pinecone import Pinecone
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -117,6 +119,16 @@ def config_user():
         if st.button("Eliminar todas mis conversaciones", type="primary", on_click=delete_conversations):
             st.rerun()
 
+@st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
+def config_feedback():
+    st.write("Si QuillaGPT no ha podido responder a tu consulta y deseas que fuera respondida, favor de indicarlo en el recuadro de abajo para derivar la consulta al administrador.")
+    derivar = st.text_area("Consulta a derivar al administrador", height=100, max_chars=500, placeholder="Escribe aquí tu consulta...")
+    col1, col2, col3 = st.columns([8, 2, 2])
+    with col2:
+        st.button("Cancelar", type="secondary", use_container_width=True)
+    with col3:
+        st.button("Enviar", type="primary", use_container_width=True, args=(derivar, ))
+
 #esto es para el sticky del titulo de la conversacion
 MARGINS = {
     "top": "2.875rem",
@@ -203,6 +215,11 @@ if "current_session_id" not in st.session_state:
 if "session_new" not in st.session_state:
     st.session_state.session_new = False
 
+if "feedback_response" not in st.session_state:
+    st.session_state.feedback_response = False
+
+if "message_response_id" not in st.session_state:
+    st.session_state.message_response_id = None
 
 #container de inicio
 container_inicio = st.container()
@@ -400,7 +417,8 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
                 stream = True
             )
         response = st.write_stream(stream)
-        feedback = st.feedback("thumbs")
+        # feedback = st.feedback("thumbs")
+        st.session_state.feedback_response = True
 
     #identificamos el tema del mensaje
     tema_response = cliente.chat.completions.create(
@@ -424,6 +442,8 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
     """
     cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), response, tema))
     conn.commit()
+    added_message_id = cursor.lastrowid
+    st.session_state.message_response_id = added_message_id
 
     #insertar el tema en la base de datos o actualizar el timestamp si es que ya existe
     cursor = conn.cursor()
@@ -451,3 +471,73 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
     if st.session_state.session_new:
         st.session_state.session_new = False
         st.rerun()
+
+def send_feedback(derivar, message_id):
+  cursor = conn.cursor()
+  query = """
+    INSERT INTO RequestQuery (query, register_date, classification, resolved, active)
+    VALUES (%s, %s, (SELECT classification FROM Message WHERE message_id = %s AND active = 1), 0, 1)
+  """
+  cursor.execute(query, (derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message_id))
+  conn.commit()
+  query = """
+    UPDATE Message
+    SET derived = 1
+    WHERE message_id = %s
+    AND active = 1
+  """
+  cursor.execute(query, (derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message_id))
+  
+@st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
+def config_feedback(message_id):
+  st.write("Si QuillaGPT no ha podido responder a tu consulta y deseas que fuera respondida, favor de indicarlo en el recuadro de abajo para derivar la consulta al administrador.")
+  derivar = st.text_area("**Consulta a derivar al administrador**", height=250, max_chars=500, placeholder="Escribe aquí tu consulta...")
+  col1, col2, col3 = st.columns([5, 2, 2])
+  with col2:
+    if st.button("Cancelar", type="secondary", use_container_width=True):
+        st.rerun()
+  with col3:
+    if st.button("Enviar", type="primary", use_container_width=True, args=(derivar, message_id), on_click=send_feedback):
+        st.rerun()
+
+if 'fbk' not in st.session_state:
+    st.session_state.fbk = str(uuid4())
+def save_feedback(respuesta):
+    # print(respuesta)
+    cursor = conn.cursor()
+    query = """
+        UPDATE Message
+        SET positive = %s
+        WHERE message_id = %s
+    """
+    cursor.execute(query, (respuesta, st.session_state.message_response_id))
+    conn.commit()
+
+    if respuesta == 1:
+        query = """
+            UPDATE Message
+            SET derived = 0
+            WHERE message_id = %s
+        """
+        cursor.execute(query, (respuesta, st.session_state.message_response_id))
+        conn.commit()
+        st.toast("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.", icon=":material/check:")
+    else:
+        config_feedback(st.session_state.message_response_id)
+
+    #crear un nuevo feedback id (si le quitamos se mantendra el feedback anterior)
+    st.session_state.fbk = str(uuid4())
+    st.session_state.feedback_response = False
+    st.session_state.message_response_id = None
+
+if st.session_state.feedback_response:
+    # streamlit_feedback(
+    #     feedback_type="thumbs",
+    #     # optional_text_label="[Optional]",
+    #     align="flex-end",
+    #     key=st.session_state.fbk,
+    #     on_submit=save_feedback
+    # )
+    feedback = st.feedback("thumbs", key=st.session_state.fbk)
+    if feedback is not None:
+        save_feedback(feedback)

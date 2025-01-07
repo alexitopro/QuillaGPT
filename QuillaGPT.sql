@@ -77,6 +77,7 @@ CREATE TABLE `RequestQuery` (
   `query` varchar(255),
   `reply` varchar(255),
   `user_resolved_id` integer,
+  `classification` varchar(255),
   `register_date` date,
   `resolved` bool,
   `active` bool
