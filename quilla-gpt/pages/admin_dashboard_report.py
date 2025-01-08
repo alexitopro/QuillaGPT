@@ -91,6 +91,65 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.title("Reporte de Indicadores")
 
+col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
+with col1:
+    cursor = conn.cursor()
+    query = """
+        SELECT COUNT(*)
+        FROM Session
+        WHERE active = 1 
+        AND start_session >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+        AND start_session < DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+    """
+    cursor.execute(query)
+    sesiones_mes = cursor.fetchone()[0]
+    st.metric(label = "Conversaciones en el mes", value = sesiones_mes, border=True)
+with col2:
+    cursor = conn.cursor()
+    query = """
+        SELECT 
+            ROUND((COUNT(CASE WHEN derived = 1 THEN 1 END) * 100.0 / COUNT(*)), 2) AS porcentaje_consultas_derivadas
+        FROM 
+            Message
+        WHERE 
+        register_date >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01') 
+        AND register_date < DATE_FORMAT(CURRENT_DATE + INTERVAL 1 MONTH, '%Y-%m-01');
+    """
+    cursor.execute(query)
+    porcentaje_derivadas = cursor.fetchone()[0]
+    st.metric(label = "Consultas derivadas en el mes", value = str(round(porcentaje_derivadas)) + '%', border=True)
+with col3:
+    cursor = conn.cursor()
+    query = """
+        SELECT 
+            AVG(d.conteo_usuario) AS prom_usuario_activos
+        FROM (
+            SELECT 
+                DATE(start_session) AS dia_interaccion,
+                COUNT(DISTINCT user_id) AS conteo_usuario
+            FROM 
+                Session
+            WHERE 
+                active = 1
+            GROUP BY 
+                DATE(start_session)
+        ) AS d;
+    """
+    cursor.execute(query)
+    cant_admins = cursor.fetchone()[0]
+    st.metric(label = "Promedio de estudiantes activos", value = int(cant_admins), border=True)
+with col4:
+    cursor = conn.cursor()
+    query = """
+        SELECT COUNT(*)
+        FROM User
+        WHERE active = 1
+        AND role_id = 2
+    """
+    cursor.execute(query)
+    cant_usuarios = cursor.fetchone()[0]
+    st.metric(label = "Estudiantes registrados", value = cant_usuarios, border=True)
+
 with st.sidebar:
     # cargar_css("./style.css")
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
@@ -112,3 +171,15 @@ with st.sidebar:
     if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
         st.session_state["username"] = ""
         st.switch_page('main.py')
+
+st.markdown("""
+    <style>
+        [data-testid="stMetric"] {
+            text-align: center;
+        }
+
+        [data-testid="stMetricLabel"] {
+            display: flex;
+        }
+    </style>
+""", unsafe_allow_html=True)

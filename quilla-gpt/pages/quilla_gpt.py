@@ -486,7 +486,8 @@ def send_feedback(derivar, message_id):
     WHERE message_id = %s
     AND active = 1
   """
-  cursor.execute(query, (derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), message_id))
+  cursor.execute(query, (message_id))
+  conn.commit()
   
 @st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
 def config_feedback(message_id):

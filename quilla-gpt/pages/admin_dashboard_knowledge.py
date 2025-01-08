@@ -276,7 +276,7 @@ with tab3:
     if "disabled" not in st.session_state:
         st.session_state["disabled"] = True
     if "text" not in st.session_state:
-        st.session_state["text"] = ""
+        st.session_state.text = ""
     def disable_instructions():
         st.session_state["disabled"] = not st.session_state["disabled"]
 
@@ -288,11 +288,11 @@ with tab3:
     """
     cursor.execute(query)
     data = cursor.fetchone()
-    if not st.session_state["text"] and data:
-        st.session_state["text"] = data[0]
+    if not st.session_state.text and data:
+        st.session_state.text = data[0]
 
     def cancel_instructions():
-        st.session_state["text"] = data[0] if data else ""
+        st.session_state.text = data[0] if data else ""
         disable_instructions()
 
     def save_instructions(instrucciones):
