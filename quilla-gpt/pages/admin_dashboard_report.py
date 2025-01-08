@@ -113,11 +113,11 @@ with col2:
             Message
         WHERE 
         register_date >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01') 
-        AND register_date < DATE_FORMAT(CURRENT_DATE + INTERVAL 1 MONTH, '%Y-%m-01');
+        AND register_date < DATE_FORMAT(CURRENT_DATE + INTERVAL 1 MONTH, '%Y-%m-01') AND active = 1 AND role = 'assistant';
     """
     cursor.execute(query)
     porcentaje_derivadas = cursor.fetchone()[0]
-    st.metric(label = "Consultas derivadas en el mes", value = str(round(porcentaje_derivadas)) + '%', border=True)
+    st.metric(label = "Ratio de consultas derivadas en el mes", value = str(round(porcentaje_derivadas)) + '%', border=True)
 with col3:
     cursor = conn.cursor()
     query = """
