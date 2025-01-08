@@ -2,6 +2,9 @@ import streamlit as st
 import pymysql
 import hashlib
 import time
+import pandas as pd
+import altair as alt
+import plotly.express as px
 
 st.set_page_config(
     layout = "wide",
@@ -103,7 +106,7 @@ with col1:
     """
     cursor.execute(query)
     sesiones_mes = cursor.fetchone()[0]
-    st.metric(label = "Conversaciones en el mes", value = sesiones_mes, border=True)
+    st.metric(label = "**Conversaciones en el mes**", value = sesiones_mes, border=True)
 with col2:
     cursor = conn.cursor()
     query = """
@@ -117,7 +120,7 @@ with col2:
     """
     cursor.execute(query)
     porcentaje_derivadas = cursor.fetchone()[0]
-    st.metric(label = "Ratio de consultas derivadas en el mes", value = str(round(porcentaje_derivadas)) + '%', border=True)
+    st.metric(label = "**Ratio de consultas derivadas en el mes**", value = str(round(porcentaje_derivadas)) + '%', border=True)
 with col3:
     cursor = conn.cursor()
     query = """
@@ -137,7 +140,7 @@ with col3:
     """
     cursor.execute(query)
     cant_admins = cursor.fetchone()[0]
-    st.metric(label = "Promedio de estudiantes activos", value = int(cant_admins), border=True)
+    st.metric(label = "**Promedio de estudiantes activos**", value = int(cant_admins), border=True)
 with col4:
     cursor = conn.cursor()
     query = """
@@ -148,7 +151,57 @@ with col4:
     """
     cursor.execute(query)
     cant_usuarios = cursor.fetchone()[0]
-    st.metric(label = "Estudiantes registrados", value = cant_usuarios, border=True)
+    st.metric(label = "**Estudiantes registrados**", value = cant_usuarios, border=True)
+
+col1_columna, col2_columna2 = st.columns([1.5, 1])
+with col1_columna:
+    with st.container(border=True):
+        st.write("")
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            st.write("**Cantidad de Consultas por Mes**")
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                DATE_FORMAT(register_date, '%Y-%m') AS mes,
+                COUNT(*) AS conteo_mensajes
+            FROM Message
+            WHERE active = 1 
+                AND role = 'user'
+            GROUP BY DATE_FORMAT(register_date, '%Y-%m')
+            ORDER BY mes;
+        """
+        cursor.execute(query)
+        data = cursor.fetchall()
+        df = pd.DataFrame(data, columns=["Mes", "Cantidad de Consultas"])
+        st.bar_chart(data = df, x = "Mes", y = "Cantidad de Consultas", height=370)
+
+with col2_columna2:
+    with st.container(border=True):
+        st.write("")
+        col1, col2, col3 = st.columns([1, 1.5, 1])
+        with col2:
+            st.write("**Top 5 Temas de Consulta**")
+        cursor = conn.cursor()
+        query = """
+            SELECT 
+                classification AS tema,
+                COUNT(*) AS cant_class
+            FROM Message
+            WHERE active = 1 
+                AND role = 'assistant'
+            GROUP BY classification
+            ORDER BY cant_class DESC
+            LIMIT 5
+        """
+        cursor.execute(query)
+        data = cursor.fetchall()
+        df = pd.DataFrame(data, columns=["Tema", "Cantidad de Consultas"])
+        fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
+        fig.update_traces(textposition='outside', textinfo='percent+label')
+        fig.update_layout(showlegend=False)
+        fig.update_layout(height=378)
+        st.plotly_chart(fig, use_container_width=True)
 
 with st.sidebar:
     # cargar_css("./style.css")
@@ -177,7 +230,7 @@ st.markdown("""
         [data-testid="stMetric"] {
             text-align: center;
         }
-
+            
         [data-testid="stMetricLabel"] {
             display: flex;
         }
