@@ -3,6 +3,7 @@ import pymysql
 import hashlib
 import time
 import pandas as pd
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 st.set_page_config(
     layout = "wide",
@@ -23,14 +24,14 @@ if "tabla_id" not in st.session_state:
 
 #modal para revisar la consulta del estudiante
 @st.dialog("Detalle de la consulta")
-def verDetalle(selected_index):
+def verDetalle():
 
-    st.text_input("**Tema**", value=df.loc[selected_index, "Tema"], disabled=True)
+    st.text_input("**Tema**", value=tabla.selected_rows.iloc[0]["Tema"], disabled=True)
 
-    st.text_area("**Consulta del estudiante**", value=df.loc[selected_index, "Consulta"], disabled=True)
+    st.text_area("**Consulta del estudiante**", value=tabla.selected_rows.iloc[0]["Consulta"], disabled=True)
 
-    if df.loc[selected_index, "Estado"] == "Resuelta":
-        respuesta = st.text_area("**Respuesta**", value=df.loc[selected_index, "Respuesta"], disabled = True)
+    if tabla.selected_rows.iloc[0]["Estado"] == "Resuelta":
+        respuesta = st.text_area("**Respuesta**", value=tabla.selected_rows.iloc[0]["Respuesta"], disabled = True)
     else:
         respuesta = st.text_area("**Respuesta**", placeholder="Ingrese la respuesta a la consulta...")
         col1, col2 = st.columns([4, 2])
@@ -42,7 +43,7 @@ def verDetalle(selected_index):
                     SET reply = %s, resolved = 1
                     WHERE request_query_id = %s and active = 1
                 """
-                cursor.execute(query, (respuesta, df.loc[selected_index, "ID"]))
+                cursor.execute(query, (respuesta, tabla.selected_rows.iloc[0]["ID"]))
                 conn.commit()
                 st.session_state.tabla_id += 1
                 st.rerun()
@@ -58,59 +59,38 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.title("Banco de Consultas")
 
-#contenido
-cursor = conn.cursor()
-query = """
-    SELECT classification
-    FROM RequestQuery
-    WHERE active = 1
-    GROUP BY classification
-"""
-cursor.execute(query)
-temas = cursor.fetchall()
-opciones_temas = ["Todos"] + [tema[0] for tema in temas]
-
-col1, col2, col3 = st.columns([2, 1, 6], vertical_alignment="bottom")
-with col1:
-    tema = st.selectbox("**Tema de consulta**", opciones_temas)
-with col2:
-    estado = st.selectbox("**Estado**", ["Todos", "Pendiente", "Resuelta"])
-
-#tabla de consultas
 cursor = conn.cursor()
 query = """
     SELECT request_query_id, register_date, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
     FROM RequestQuery
-    WHERE active = 1 
-            AND (%s = 'Todos' OR resolved = %s)
-            AND (%s = 'Todos' OR classification = %s)
+    WHERE active = 1
 """
-cursor.execute(query, (estado, 1 if estado == "Resuelta" else 0 if estado == "Pendiente" else None, tema, tema))
+cursor.execute(query)
 data = cursor.fetchall()
 df = pd.DataFrame(data, columns=["ID", "Fecha de registro", "Tema", "Consulta", "Respuesta", "Estado"])
-df['Fecha de registro'] = pd.to_datetime(df['Fecha de registro'], format="%Y-%m-%d %H:%M:%S")
-df['Fecha de registro'] = df['Fecha de registro'].dt.strftime("%d/%m/%Y")
+df['Fecha de registro'] = pd.to_datetime(df['Fecha de registro'], format="%d/%m/%Y")
 
-# def estado_style_map(value):
-#     return "color: green;" if value == "Resuelta" else ""
+builder = GridOptionsBuilder.from_dataframe(df)
+builder.configure_default_column(filter=True)
+builder.configure_selection(selection_mode='single', use_checkbox=True)
 
-# # Apply the style map to the 'Estado' column
-# styled_df = df.style.applymap(estado_style_map, subset=["Estado"])
+filter_model = {
+    "Consulta": {
+        "filterType": "text",
+        "type": "equals",   # Change 'contains' to 'equals' or other types if needed
+        "filter": "cac"  # The preset filter value
+    }
+}
 
-event = st.dataframe(
-    df,
-    on_select="rerun",
-    selection_mode=["single-row"],
-    hide_index=True,
-    key = str(st.session_state.tabla_id),
-    use_container_width=True
-)
+# builder.configure_column("Fecha de registro", type=["customDateTimeFormat"], custom_format_string='dd-MM-yyyy')
+grid_options = builder.build()
 
-if event.selection is not None:
-    if event.selection['rows']:
-        selected_index = event.selection['rows'][0]
-        # value_a = df.loc[selected_index, 'a']
-        verDetalle(selected_index)
+grid_options["filterModel"] = filter_model
+
+builder.configure_auto_height(True)
+tabla = AgGrid(df, gridOptions = grid_options, key = str(st.session_state.tabla_id), fit_columns_on_grid_load=True)
+if tabla.selected_rows is not None:
+    verDetalle()
 
 #modal para la configuracion del usuario
 @st.dialog("Configuración del usuario")
