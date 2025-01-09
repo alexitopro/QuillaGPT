@@ -1,12 +1,6 @@
-import os
-import re
 from pinecone import Pinecone, ServerlessSpec
 from sentence_transformers import SentenceTransformer
-from dotenv import load_dotenv
 import streamlit as st
-
-#cargar la variable de entorno
-load_dotenv()
 
 #cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
@@ -16,7 +10,7 @@ index_name = "quillagpt-index"
 #conectarse a pinecone y crear un index si tdv no se ha hecho
 def pinecone_init():
     #inicializar Pinecone
-    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 
     if not pc.has_index(index_name):
         pc.create_index(
