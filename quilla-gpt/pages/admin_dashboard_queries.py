@@ -51,7 +51,7 @@ def verDetalle(selected_index):
                 data = {}
                 data['consulta'] = df.loc[selected_index, "Consulta"]
                 data['respuesta'] = respuesta
-                data['id'] = df.loc[selected_index, "ID"]
+                data['id'] = int(df.loc[selected_index, "ID"])
                 data['fuente'] = "Consulta derivada al administrador del banco de consultas de QuillaGPT"
                 json_data = json.dumps(data)
                 data_dict = json.loads(json_data)

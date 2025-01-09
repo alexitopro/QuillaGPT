@@ -55,6 +55,8 @@ with col2:
                 flag = "Debe ingresar su correo electrónico."
             elif password == "":
                 flag = "Debe ingresar su contraseña."
+            elif username == "":
+                flag = "Debe ingresar un nombre de usuario."
             elif not any(char.isupper() for char in password):
                 flag = "La contraseña debe tener por lo menos una letra mayúscula."
             elif not any(char.islower() for char in password):

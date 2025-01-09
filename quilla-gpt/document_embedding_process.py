@@ -46,7 +46,7 @@ def procesar_arch_pdf(arch):
 
     #preprocesar cada fragmento y agregar la fuente
     texto_con_fuente = [
-        {"text": preprocesar_texto(str(documento.page_content)), "source": arch, "page": documento.metadata.get("page", None)}
+        {"text": preprocesar_texto(str(documento.page_content)), "source": arch, "page": documento.metadata.get("page", None) + 1}
         for documento in documentos
     ]
 

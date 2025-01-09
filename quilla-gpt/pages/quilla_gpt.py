@@ -119,16 +119,6 @@ def config_user():
         if st.button("Eliminar todas mis conversaciones", type="primary", on_click=delete_conversations):
             st.rerun()
 
-@st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
-def config_feedback():
-    st.write("Si QuillaGPT no ha podido responder a tu consulta y deseas que fuera respondida, favor de indicarlo en el recuadro de abajo para derivar la consulta al administrador.")
-    derivar = st.text_area("Consulta a derivar al administrador", height=100, max_chars=500, placeholder="Escribe aquí tu consulta...")
-    col1, col2, col3 = st.columns([8, 2, 2])
-    with col2:
-        st.button("Cancelar", type="secondary", use_container_width=True)
-    with col3:
-        st.button("Enviar", type="primary", use_container_width=True, args=(derivar, ))
-
 #esto es para el sticky del titulo de la conversacion
 MARGINS = {
     "top": "2.875rem",
@@ -380,13 +370,19 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
         with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
 
             #instruccion personalizada
+            cursor = conn.cursor()
+            query = """
+                SELECT instruction
+                FROM CustomInstruction
+                WHERE active = 1
+            """
+            cursor.execute(query)
+            sistem_message = cursor.fetchone()[0]
+
             sistema = {
                 "role": "system",
                 "content": (
-                    "Te llamas QuillaGPT y ayudas sobre procesos académico-administrativos de la PUCP. "
-                    "Menciona sobre qué fuente has sacado información y, si es de la guía del panda, menciona en qué página el usuario "
-                    "puede encontrar más información. Asimismo, si hay algún link de interés, compártelo. "
-                    "Si no encuentras información relacionada, puedes decir 'No tengo información sobre eso'."
+                    sistem_message
                 ),
             }
 
@@ -491,7 +487,7 @@ def send_feedback(derivar, message_id):
   
 @st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
 def config_feedback(message_id):
-  st.write("Si QuillaGPT no ha podido responder a tu consulta y deseas que fuera respondida, favor de indicarlo en el recuadro de abajo para derivar la consulta al administrador.")
+  st.write("Si QuillaGPT no ha podido responder a tu consulta y deseas que fuera respondida, favor de indicarlo en el recuadro de abajo para derivar la consulta al administrador. A fin de que el administrador pueda asistirte mejor, especifique el procedimiento de interés y consecuentemente añada la consulta correspondiente. De esta manera, el administrador podrá brindarte una respuesta más precisa según el contexto especificado.")
   derivar = st.text_area("**Consulta a derivar al administrador**", height=250, max_chars=500, placeholder="Escribe aquí tu consulta...")
   col1, col2, col3 = st.columns([5, 2, 2])
   with col2:
@@ -520,9 +516,9 @@ def save_feedback(respuesta):
             SET derived = 0
             WHERE message_id = %s
         """
-        cursor.execute(query, (respuesta, st.session_state.message_response_id))
+        cursor.execute(query, st.session_state.message_response_id)
         conn.commit()
-        st.toast("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.", icon=":material/check:")
+        st.success("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.")
     else:
         config_feedback(st.session_state.message_response_id)
 

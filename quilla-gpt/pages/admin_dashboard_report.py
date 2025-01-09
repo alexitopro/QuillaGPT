@@ -120,6 +120,8 @@ with col2:
     """
     cursor.execute(query)
     porcentaje_derivadas = cursor.fetchone()[0]
+    if porcentaje_derivadas is None:
+        porcentaje_derivadas = 0
     st.metric(label = "**Ratio de consultas derivadas en el mes**", value = str(round(porcentaje_derivadas)) + '%', border=True)
 with col3:
     cursor = conn.cursor()
@@ -140,6 +142,8 @@ with col3:
     """
     cursor.execute(query)
     cant_admins = cursor.fetchone()[0]
+    if cant_admins is None:
+        cant_admins = 0
     st.metric(label = "**Promedio de estudiantes activos**", value = int(cant_admins), border=True)
 with col4:
     cursor = conn.cursor()
@@ -174,7 +178,10 @@ with col1_columna:
         cursor.execute(query)
         data = cursor.fetchall()
         df = pd.DataFrame(data, columns=["Mes", "Cantidad de Consultas"])
-        st.bar_chart(data = df, x = "Mes", y = "Cantidad de Consultas", height=370)
+        if df.empty:
+            st.caption("No se han efectuado consultas a lo largo del mes.")
+        else:
+            st.bar_chart(data = df, x = "Mes", y = "Cantidad de Consultas", height=370)
 
 with col2_columna2:
     with st.container(border=True):
@@ -197,11 +204,14 @@ with col2_columna2:
         cursor.execute(query)
         data = cursor.fetchall()
         df = pd.DataFrame(data, columns=["Tema", "Cantidad de Consultas"])
-        fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
-        fig.update_traces(textposition='outside', textinfo='percent+label')
-        fig.update_layout(showlegend=False)
-        fig.update_layout(height=378)
-        st.plotly_chart(fig, use_container_width=True)
+        if df.empty:
+            st.caption("No se han efectuado consultas a lo largo del mes.")
+        else:
+            fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
+            fig.update_traces(textposition='outside', textinfo='percent+label')
+            fig.update_layout(showlegend=False)
+            fig.update_layout(height=378)
+            st.plotly_chart(fig, use_container_width=True)
 
 with st.sidebar:
     # cargar_css("./style.css")
