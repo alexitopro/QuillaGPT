@@ -76,7 +76,6 @@ CREATE TABLE `RequestQuery` (
   `request_query_id` integer PRIMARY KEY AUTO_INCREMENT,
   `query` varchar(255),
   `reply` varchar(255),
-  `user_resolved_id` integer,
   `classification` varchar(255),
   `register_date` date,
   `resolved` bool,
