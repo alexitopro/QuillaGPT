@@ -3,6 +3,8 @@ import pymysql
 import hashlib
 import time
 import pandas as pd
+import json
+from json_to_vectorDB_uploader import create_query_embedding
 
 st.set_page_config(
     layout = "wide",
@@ -44,6 +46,17 @@ def verDetalle(selected_index):
                 """
                 cursor.execute(query, (respuesta, df.loc[selected_index, "ID"]))
                 conn.commit()
+
+                #subir la respuesta a la base de datos de Pinecone
+                data = {}
+                data['consulta'] = df.loc[selected_index, "Consulta"]
+                data['respuesta'] = respuesta
+                data['id'] = df.loc[selected_index, "ID"]
+                data['fuente'] = "Consulta derivada al administrador del banco de consultas de QuillaGPT"
+                json_data = json.dumps(data)
+                data_dict = json.loads(json_data)
+                create_query_embedding(data_dict)
+
                 st.session_state.tabla_id += 1
                 st.rerun()
 
