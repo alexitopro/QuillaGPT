@@ -11,7 +11,7 @@ def create_query_embedding(arch_json):
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
 
     #values de pinecone sera la pregunta de la query
-    texts = arch_json['consulta']
+    texts = [arch_json['consulta']]
     embeddings = model.encode(texts).tolist()
 
     #crear el index de Pinecone
@@ -33,13 +33,14 @@ def create_query_embedding(arch_json):
     index = pc.Index(index_name)
 
     #preparar para el insertado de los datos
+    tipo = "ConsultaDerivada_"
     records = [
         {
-            "id": str(idx),
+            "id": f"{tipo}{arch_json['id']}",
             "values": embedding,
-            "metadata": d
+            "metadata": arch_json
         }
-        for idx, (d, embedding) in enumerate(zip(arch_json, embeddings))
+        for _, embedding in enumerate(embeddings)
     ]
 
     #insertar los datos en el index
