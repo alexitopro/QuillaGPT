@@ -437,7 +437,27 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
     tema_response = cliente.chat.completions.create(
         model="meta/llama-3.3-70b-instruct",
         messages=[
-            {"role": "system", "content": "Clasifica la consulta del usuario en uno de los siguientes temas: Cambio de especialidad, Certificado de notas, Convalidación de cursos, Duplicado de carné universitario, Matrícula, Obtención del título profesional, Pago para trámites académicos no presenciales, Reconocimiento de cursos, Registro histórico de notas, Reincorporación, Retiro de cursos, Solicitud de constancias a la OCR, Transferencia interna, Verificación de grados y/o títulos. Responde únicamente con el tema correspondiente y si no tiene relación con ninguno de los mencionados, por defecto es Otros."},
+            {"role": "system", "content": """
+            Eres un asistente que clasifica el mensaje en las siguientes categorías:
+- Cambio de especialidad
+- Certificado de notas
+- Convalidación de cursos
+- Duplicado de carné universitario
+- Matrícula
+- Obtención del título profesional
+- Pago para trámites académicos no presenciales
+- Reconocimiento de cursos
+- Registro histórico de notas
+- Reincorporación
+- Retiro de cursos
+- Solicitud de constancias a la OCR
+- Transferencia interna
+- Verificación de grados y/o títulos
+
+Si no es ninguna categoría de las mencionadas, SOLO DI: "Otros".
+
+Responde únicamente con el nombre de la categoría correspondiente, sin explicaciones adicionales.
+            """},
             {"role": "user", "content": prompt},
         ],
         temperature=0.2,
@@ -453,6 +473,8 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
         INSERT INTO Message (session_id, timestamp, register_date, role, content, classification, active)
         VALUES (%s, %s, %s, 'assistant', %s, %s, 1)
     """
+    print("Este es el tema:")
+    print(tema)
     cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), response, tema))
     conn.commit()
     added_message_id = cursor.lastrowid
