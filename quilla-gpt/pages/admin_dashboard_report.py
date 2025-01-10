@@ -100,9 +100,9 @@ with col1:
     query = """
         SELECT COUNT(*)
         FROM Session
-        WHERE active = 1 
-        AND start_session >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-        AND start_session < DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+        WHERE
+            start_session >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+            AND start_session < DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
     """
     cursor.execute(query)
     sesiones_mes = cursor.fetchone()[0]
@@ -134,8 +134,6 @@ with col3:
                 COUNT(DISTINCT user_id) AS conteo_usuario
             FROM 
                 Session
-            WHERE 
-                active = 1
             GROUP BY 
                 DATE(start_session)
         ) AS d;

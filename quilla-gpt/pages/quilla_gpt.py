@@ -23,17 +23,25 @@ cliente = OpenAI(
   api_key = os.getenv("OPENAI_API_KEY")
 )
 
-# incicializar pinecone
-pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-index_name = "quillagpt-index"
-index = pc.Index(index_name)
-#cargar el modelo de embedding
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-
 st.set_page_config(
     layout = "wide",
     page_title = "QuillaGPT"
 )
+
+# incicializar pinecone
+@st.cache_resource
+def inicializar_pinecone():
+    pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+    index_name = "quillagpt-index"
+    index = pc.Index(index_name)
+    return index
+index = inicializar_pinecone()
+
+#cargar el modelo de embedding
+@st.cache_data
+def cargar_modelo():
+    return SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+model = cargar_modelo()
 
 #funcion para eliminar conversaciones
 def delete_conversations():
@@ -176,21 +184,31 @@ query = """
     WHERE active = 1
 """
 cursor.execute(query)
-customInstruction = cursor.fetchone()[0]
+sistem_message = cursor.fetchone()[0]
+
+sistema = {
+    "role": "system",
+    "content": (
+        sistem_message
+    ),
+}
 
 #cargar el archivo css y llamarla
+# @st.cache_data
 def cargar_css(file_path):
     with open(file_path, "r") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 cargar_css("style.css")
 
 #carga de imagenes
+@st.cache_data
 def encode_image(file_path):
     with open(file_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
 plus_icon = encode_image("./static/plus.png")
 
 #carga de spinner lottie
+# @st.cache_data
 def load_lottie_json(filepath: str):
     with open(filepath, "r") as f:
         return json.load(f)
@@ -253,6 +271,7 @@ with st.sidebar:
             st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
             if st.button(''):
                 st.session_state.messages = []
+                st.session_state.feedback_response = False
 
     cursor = conn.cursor()
     query = """
@@ -304,57 +323,7 @@ for message in st.session_state.messages:
 
 #entrada de texto del usuario
 if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
-
-    if st.session_state.messages == []:
-        #generamos el titulo de la session
-        response = cliente.chat.completions.create(
-            model="meta/llama-3.3-70b-instruct",
-            messages=[
-                {"role": "system", "content": "Te llamas QuillaGPT y ayudas sobre procesos academico administrativos de la PUCP. Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes."},
-                {"role": "user", "content": prompt},
-            ],
-            temperature=0.2,
-            top_p=0.7,
-            max_tokens=8192,
-            stream=False
-        )
-        titulo = response.choices[0].message.content
-        titulo = titulo.replace('"', "")
-        cursor = conn.cursor()
-        query = """
-            SELECT user_id
-            FROM User
-            WHERE username = %s AND active = 1
-        """
-        cursor.execute(query, st.session_state["username"])
-        user_id = cursor.fetchone()[0]
-        #insertar la nueva session en la base de datos
-        query = """
-            INSERT INTO Session (start_session, user_id, title, active)
-            VALUES (%s, %s, %s, 1)
-        """
-        cursor.execute(query, (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), user_id, titulo))
-        conn.commit()
-        #obtener el id de la session
-        session_id = cursor.lastrowid
-        st.session_state.current_session_id = session_id
-        #activamos la nueva session
-        st.session_state.session_new = True
-
-    #insertar el mensaje del usuario en la base de datos
-    cursor = conn.cursor()
-    query = """
-        INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
-        VALUES (%s, %s, %s, 'user', %s, 1)
-    """
-    cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), prompt))
-    conn.commit()
-
-    #preparar el historial de conversacion
-    conversacion = []
-    for message in st.session_state.messages:
-        conversacion.append({"role": message["role"], "content": message["content"]})
-
+    st.empty()
     #mostrar la respuesta del usuario
     div = f"""
     <div class = "chat-row row-reverse">
@@ -365,26 +334,59 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
 
     #agregar respuesta del asistente
     with st.chat_message("assistant", avatar = "./static/squirrel.png"):
-
+        st.empty()
         lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
         with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
 
-            #instruccion personalizada
+            if st.session_state.messages == []:
+                #generamos el titulo de la session
+                response = cliente.chat.completions.create(
+                    model="meta/llama-3.3-70b-instruct",
+                    messages=[
+                        {"role": "system", "content": "Te llamas QuillaGPT y ayudas sobre procesos academico administrativos de la PUCP. Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes."},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=0.2,
+                    top_p=0.7,
+                    max_tokens=8192,
+                    stream=False
+                )
+                titulo = response.choices[0].message.content
+                titulo = titulo.replace('"', "")
+                cursor = conn.cursor()
+                query = """
+                    SELECT user_id
+                    FROM User
+                    WHERE username = %s AND active = 1
+                """
+                cursor.execute(query, st.session_state["username"])
+                user_id = cursor.fetchone()[0]
+                #insertar la nueva session en la base de datos
+                query = """
+                    INSERT INTO Session (start_session, user_id, title, active)
+                    VALUES (%s, %s, %s, 1)
+                """
+                cursor.execute(query, (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), user_id, titulo))
+                conn.commit()
+                #obtener el id de la session
+                session_id = cursor.lastrowid
+                st.session_state.current_session_id = session_id
+                #activamos la nueva session
+                st.session_state.session_new = True
+
+            #insertar el mensaje del usuario en la base de datos
             cursor = conn.cursor()
             query = """
-                SELECT instruction
-                FROM CustomInstruction
-                WHERE active = 1
+                INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
+                VALUES (%s, %s, %s, 'user', %s, 1)
             """
-            cursor.execute(query)
-            sistem_message = cursor.fetchone()[0]
+            cursor.execute(query, (st.session_state.current_session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), prompt))
+            conn.commit()
 
-            sistema = {
-                "role": "system",
-                "content": (
-                    sistem_message
-                ),
-            }
+            #preparar el historial de conversacion
+            conversacion = []
+            for message in st.session_state.messages:
+                conversacion.append({"role": message["role"], "content": message["content"]})
 
             #buscar en pinecone los resultados del prompt
             query_embedding = model.encode([prompt])[0].tolist()
@@ -412,10 +414,25 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
                 max_tokens = 8192,
                 stream = True
             )
-        response = st.write_stream(stream)
-        # feedback = st.feedback("thumbs")
-        st.session_state.feedback_response = True
 
+            #generamos respuesta como string
+            respuesta =  cliente.chat.completions.create(
+                model = "meta/llama-3.3-70b-instruct",
+                messages=[
+                    sistema,
+                    *conversacion,
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": contexto}
+                ],
+                temperature = 0.2,
+                top_p = 0.7,
+                max_tokens = 8192,
+                stream = False
+            )
+
+        response = st.write_stream(stream)
+        st.session_state.feedback_response = True
+        
     #identificamos el tema del mensaje
     tema_response = cliente.chat.completions.create(
         model="meta/llama-3.3-70b-instruct",
@@ -518,7 +535,9 @@ def save_feedback(respuesta):
         """
         cursor.execute(query, st.session_state.message_response_id)
         conn.commit()
-        st.success("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.")
+        bandera = st.success("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.")
+        time.sleep(3)
+        bandera.empty()
     else:
         config_feedback(st.session_state.message_response_id)
 
