@@ -1,9 +1,10 @@
-from sentence_transformers import SentenceTransformer
-from pinecone import Pinecone, ServerlessSpec
 import time
 import streamlit as st
 
 def create_query_embedding(arch_json):
+    from sentence_transformers import SentenceTransformer
+    from pinecone import Pinecone, ServerlessSpec
+    
     #inicializar Pinecone
     pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 

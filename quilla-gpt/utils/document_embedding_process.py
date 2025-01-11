@@ -1,13 +1,11 @@
 import os
 import re
-from pinecone import Pinecone, ServerlessSpec
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from sentence_transformers import SentenceTransformer
 import streamlit as st
 
 #conectarse a pinecone y crear un index si tdv no se ha hecho
 def pinecone_init(index_name):
+    from pinecone import Pinecone, ServerlessSpec
+
     #inicializar Pinecone
     pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 
@@ -29,6 +27,9 @@ def preprocesar_texto(texto):
 
 #procesar archivo pdf
 def procesar_arch_pdf(arch):
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain.text_splitter import RecursiveCharacterTextSplitter
+
     #cargar el archivo pdf
     pdf_loader = PyPDFLoader(arch)
     data = pdf_loader.load()
@@ -78,6 +79,7 @@ def insertar_datos(data, embeddings, pc, tipo, index_name):
 
 #procesar el archivo pdf que se encuentra en la base de datos
 def procesar_arch_db(nombre_arch, arch, tipo):
+    from sentence_transformers import SentenceTransformer
 
     #cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
     model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')

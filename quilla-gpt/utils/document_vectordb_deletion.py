@@ -1,8 +1,8 @@
-from pinecone import Pinecone, ServerlessSpec
 import streamlit as st
 
 #conectarse a pinecone y crear un index si tdv no se ha hecho
 def pinecone_init(index_name):
+    from pinecone import Pinecone, ServerlessSpec
     #inicializar Pinecone
     pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 
