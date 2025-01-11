@@ -6,13 +6,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 import streamlit as st
 
-#cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-#crear el index de Pinecone
-index_name = "quillagpt-index"
-
 #conectarse a pinecone y crear un index si tdv no se ha hecho
-def pinecone_init():
+def pinecone_init(index_name):
     #inicializar Pinecone
     pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 
@@ -58,12 +53,12 @@ def procesar_arch_pdf(arch):
 #     raise FileNotFoundError("No se encontró ningún archivo PDF en la carpeta especificada.")
 
 #crear embeddings
-def crear_embeddings(texto):
+def crear_embeddings(texto, model):
     embeddings = model.encode(texto).tolist()
     return embeddings
 
 #insertar datos en Pinecone
-def insertar_datos(data, embeddings, pc, tipo):
+def insertar_datos(data, embeddings, pc, tipo, index_name):
     index = pc.Index(index_name)
     stats = index.describe_index_stats(namespace = "quillagpt-index")
     total_vectores = stats['total_vector_count']
@@ -83,13 +78,19 @@ def insertar_datos(data, embeddings, pc, tipo):
 
 #procesar el archivo pdf que se encuentra en la base de datos
 def procesar_arch_db(nombre_arch, arch, tipo):
+
+    #cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+    #crear el index de Pinecone
+    index_name = "quillagpt-index"
+
     #guardar el documento en un archivo temporal
     archivo_temporal = nombre_arch
     with open(archivo_temporal, "wb") as f:
         f.write(arch.read())
 
     #inicializamos Pinecone
-    pc = pinecone_init()
+    pc = pinecone_init(index_name)
 
     #borramos en Pinecone los datos anteriores de la Guia del Panda
     index = pc.Index(index_name)
@@ -98,10 +99,10 @@ def procesar_arch_db(nombre_arch, arch, tipo):
 
     #procesamos el archivo pdf y creamos los embeddings
     texto = procesar_arch_pdf(archivo_temporal)
-    embeddings = crear_embeddings(texto)
+    embeddings = crear_embeddings(texto, model)
 
     #insertamos los datos
-    insertar_datos(texto, embeddings, pc, tipo)
+    insertar_datos(texto, embeddings, pc, tipo, index_name)
 
     #borramos el archivo temporal
     os.remove(archivo_temporal)

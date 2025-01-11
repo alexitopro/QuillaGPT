@@ -1,5 +1,7 @@
-from document_embedding_process import procesar_arch_db
-from document_vectordb_deletion import eliminar_arch_db
+# from document_embedding_process import procesar_arch_db
+# from document_vectordb_deletion import eliminar_arch_db
+from utils.document_embedding_process import procesar_arch_db
+from utils.document_vectordb_deletion import eliminar_arch_db
 import streamlit as st
 import pymysql
 import pandas as pd

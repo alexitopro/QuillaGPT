@@ -1,14 +1,8 @@
 from pinecone import Pinecone, ServerlessSpec
-from sentence_transformers import SentenceTransformer
 import streamlit as st
 
-#cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
-model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-#crear el index de Pinecone
-index_name = "quillagpt-index"
-
 #conectarse a pinecone y crear un index si tdv no se ha hecho
-def pinecone_init():
+def pinecone_init(index_name):
     #inicializar Pinecone
     pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 
@@ -24,8 +18,11 @@ def pinecone_init():
 
 #eliminar el archivo pdf que se encuentra en la base de datos
 def eliminar_arch_db(tipo):
+    #crear el index de Pinecone
+    index_name = "quillagpt-index"
+
     #inicializamos Pinecone
-    pc = pinecone_init()
+    pc = pinecone_init(index_name)
 
     #borramos en Pinecone los datos anteriores de la Guia del Panda
     index = pc.Index(index_name)

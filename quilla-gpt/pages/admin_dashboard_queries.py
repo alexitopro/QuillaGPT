@@ -4,7 +4,7 @@ import hashlib
 import time
 import pandas as pd
 import json
-from query_to_vectorDB_uploader import create_query_embedding
+from utils.query_to_vectorDB_uploader import create_query_embedding
 
 st.set_page_config(
     layout = "wide",
