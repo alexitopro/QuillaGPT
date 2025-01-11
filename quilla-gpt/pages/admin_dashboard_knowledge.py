@@ -1,7 +1,7 @@
-# from document_embedding_process import procesar_arch_db
-# from document_vectordb_deletion import eliminar_arch_db
 from utils.document_embedding_process import procesar_arch_db
 from utils.document_vectordb_deletion import eliminar_arch_db
+from utils.scraper import scraper
+from utils.create_embeddings import create_web_scraping_embeddings
 import streamlit as st
 import pymysql
 import pandas as pd
@@ -105,6 +105,28 @@ def config_user():
                 time.sleep(4)
                 error.empty()
 
+with st.sidebar:
+    # cargar_css("./style.css")
+    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    
+    if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
+        st.switch_page("./pages/admin_dashboard_users.py")
+
+    st.button("Gestión de Conocimiento", use_container_width=True, icon=":material/description:", disabled=True)
+
+    if st.button("Banco de Consultas", use_container_width=True, type="secondary", icon=":material/question_answer:"):
+        st.switch_page("./pages/admin_dashboard_queries.py")
+
+    if st.button("Reporte de Indicadores", use_container_width=True, type="secondary", icon=":material/bar_chart:"):
+        st.switch_page("./pages/admin_dashboard_report.py")
+
+    st.header("Opciones")
+    if st.button("Configuración del usuario", use_container_width=True, icon=":material/settings:"):
+        config_user()
+    if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
+        st.session_state["username"] = ""
+        st.switch_page('main.py')
+
 container_inicio = st.container()
 container_inicio.write("")
 # container_inicio.write("")
@@ -120,6 +142,31 @@ with tab1:
     - https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa
     - https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/
     """)
+    st.subheader("¿Deseas actualizar la información disponible?")
+    st.write("""
+El proceso de actualización incluye los siguientes pasos:
+
+1. Revisión automática de las páginas previamente mencionadas.
+2. Identificación y extracción de los trámites y procesos administrativos según la página correspondiente.
+3. Almacenamiento de datos en la base de datos para que QuillaGPT pueda utilizarlos en respuestas a consultas de los estudiantes.
+
+Haz clic en el botón de abajo para asegurarte de tener los datos más recientes. Recuerda que este proceso puede tardar algunos minutos en completarse.""")
+
+    if 'run_button' in st.session_state and st.session_state.run_button == True:
+        st.session_state.running = True
+    else:
+        st.session_state.running = False
+
+    if st.button('Actualizar información', disabled=st.session_state.running, key='run_button', icon=":material/sync:", type="secondary"):
+        # with st.spinner("Actualizando QuillaGPT..."):
+        #     scraper()
+        status = st.progress(0, text="Extrayendo datos de la Facultad de Ciencias e Ingeniería...")
+        scraper()
+        status.progress(0.50, text="Actualizando base de datos de QuillaGPT...")
+        create_web_scraping_embeddings()
+        status.progress(0.99, text="Actualización completada exitosamente...")
+        time.sleep(3)
+        st.rerun()
 
 #conocimiento dinamico
 with tab2:
@@ -329,24 +376,24 @@ with tab3:
     with col3:
         st.button("Editar instrucciones" if st.session_state["disabled"] else "Guardar instrucciones", type="primary", on_click=save_instructions, use_container_width=True, args=(instrucciones, ))
 
-with st.sidebar:
-    # cargar_css("./style.css")
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+# with st.sidebar:
+#     # cargar_css("./style.css")
+#     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
     
-    if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
-        st.switch_page("./pages/admin_dashboard_users.py")
+#     if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
+#         st.switch_page("./pages/admin_dashboard_users.py")
 
-    st.button("Gestión de Conocimiento", use_container_width=True, icon=":material/description:", disabled=True)
+#     st.button("Gestión de Conocimiento", use_container_width=True, icon=":material/description:", disabled=True)
 
-    if st.button("Banco de Consultas", use_container_width=True, type="secondary", icon=":material/question_answer:"):
-        st.switch_page("./pages/admin_dashboard_queries.py")
+#     if st.button("Banco de Consultas", use_container_width=True, type="secondary", icon=":material/question_answer:"):
+#         st.switch_page("./pages/admin_dashboard_queries.py")
 
-    if st.button("Reporte de Indicadores", use_container_width=True, type="secondary", icon=":material/bar_chart:"):
-        st.switch_page("./pages/admin_dashboard_report.py")
+#     if st.button("Reporte de Indicadores", use_container_width=True, type="secondary", icon=":material/bar_chart:"):
+#         st.switch_page("./pages/admin_dashboard_report.py")
 
-    st.header("Opciones")
-    if st.button("Configuración del usuario", use_container_width=True, icon=":material/settings:"):
-        config_user()
-    if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
-        st.session_state["username"] = ""
-        st.switch_page('main.py')
+#     st.header("Opciones")
+#     if st.button("Configuración del usuario", use_container_width=True, icon=":material/settings:"):
+#         config_user()
+#     if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
+#         st.session_state["username"] = ""
+#         st.switch_page('main.py')
