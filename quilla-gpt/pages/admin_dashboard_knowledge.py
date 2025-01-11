@@ -341,7 +341,7 @@ with tab3:
         st.session_state.text = data[0]
 
     def cancel_instructions():
-        st.session_state.text = data[0] if data else ""
+        st.session_state.text = data[0]
         disable_instructions()
 
     def save_instructions(instrucciones):
@@ -367,7 +367,7 @@ with tab3:
         disable_instructions()
 
     st.write("Las instrucciones personalizadas permiten compartir lo que quieras que QuillaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las  conversaciones nuevas que los estudiantes de la PUCP tengan con ella.")
-    instrucciones = st.text_area("**Instrucciones personalizadas**", height=300, max_chars=None, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", value=st.session_state.text)
+    instrucciones = st.text_area("**Instrucciones personalizadas**", height=500, max_chars=None, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
 
     col1, col2, col3 = st.columns([8, 2, 2])
     with col2:
