@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # incicializar pinecone
-@st.cache_resource
+@st.cache_resource(show_spinner="Inicializando QuillaGPT...")
 def inicializar_pinecone():
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
     index_name = "quillagpt-index"
@@ -38,7 +38,7 @@ def inicializar_pinecone():
 index = inicializar_pinecone()
 
 #cargar el modelo de embedding
-@st.cache_data
+@st.cache_data(show_spinner="Inicializando QuillaGPT...")
 def cargar_modelo():
     return SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
 model = cargar_modelo()
@@ -201,7 +201,6 @@ def cargar_css(file_path):
 cargar_css("style.css")
 
 #carga de imagenes
-@st.cache_data
 def encode_image(file_path):
     with open(file_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
@@ -323,6 +322,7 @@ for message in st.session_state.messages:
 
 #entrada de texto del usuario
 if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
+
     st.empty()
     #mostrar la respuesta del usuario
     div = f"""
@@ -334,7 +334,7 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
 
     #agregar respuesta del asistente
     with st.chat_message("assistant", avatar = "./static/squirrel.png"):
-        st.empty()
+        
         lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
         with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
 
@@ -343,7 +343,7 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
                 response = cliente.chat.completions.create(
                     model="meta/llama-3.3-70b-instruct",
                     messages=[
-                        {"role": "system", "content": "Te llamas QuillaGPT y ayudas sobre procesos academico administrativos de la PUCP. Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes."},
+                        {"role": "system", "content": "Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes. Responde únicamente con el nombre del título correspondiente, nada más. Recuerda que es hasta máximo 5 palabras el título."},
                         {"role": "user", "content": prompt},
                     ],
                     temperature=0.2,
