@@ -195,6 +195,7 @@ with col2_columna2:
             FROM Message
             WHERE active = 1 
                 AND role = 'assistant'
+                AND classification != 'Otros'
             GROUP BY classification
             ORDER BY cant_class DESC
             LIMIT 5

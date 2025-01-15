@@ -84,7 +84,7 @@ with col2:
                 flag = "Debe ingresar su contraseña."
             else:
                 cursor = conn.cursor()
-                query = "SELECT username, role_id from User WHERE email = %s AND password = %s"
+                query = "SELECT username, role_id from User WHERE email = %s AND password = %s AND active = 1"
                 hashed_password = hashlib.sha256(password.encode('utf-8')).hexdigest()
                 values = (email, hashed_password)
                 cursor.execute(query, values)

@@ -514,6 +514,8 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
         st.rerun()
 
 def send_feedback(derivar, message_id):
+  print(derivar)
+  print(message_id)
   cursor = conn.cursor()
   query = """
     INSERT INTO RequestQuery (query, register_date, classification, resolved, active)
@@ -546,7 +548,8 @@ def config_feedback(message_id):
     if st.button("Cancelar", type="secondary", use_container_width=True):
         st.rerun()
   with col3:
-    if st.button("Enviar", type="primary", use_container_width=True, args=(derivar, message_id), on_click=send_feedback):
+    if st.button("Enviar", type="primary", use_container_width=True):
+        send_feedback(derivar, message_id)
         st.session_state.feedback_sent = True
         st.rerun()
 
