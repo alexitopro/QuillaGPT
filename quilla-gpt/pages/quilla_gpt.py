@@ -57,6 +57,13 @@ def delete_conversations():
     st.session_state.current_session_id = None
     st.session_state.sessions_updated = True
 
+if "conversation_delete" not in st.session_state:
+    st.session_state.conversation_delete = False
+
+if st.session_state.conversation_delete:
+    st.session_state.conversation_delete = False
+    st.toast("Todas las conversaciones fueron eliminadas exitosamente.", icon=":material/check:")
+
 #modal para la configuracion del usuario
 @st.dialog("Configuración del usuario")
 def config_user():
@@ -125,6 +132,7 @@ def config_user():
                     
     with tab2:
         if st.button("Eliminar todas mis conversaciones", type="primary", on_click=delete_conversations):
+            st.session_state.conversation_delete = True
             st.rerun()
 
 #esto es para el sticky del titulo de la conversacion
@@ -232,7 +240,7 @@ if "message_response_id" not in st.session_state:
 container_inicio = st.container()
 # container_inicio.write("")
 with container_inicio:
-    with sticky_container(mode="top", border=False):
+    # with sticky_container(mode="top", border=False):
         # st.write("")
         st.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
         st.write(
@@ -438,27 +446,25 @@ if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún proce
         model="meta/llama-3.3-70b-instruct",
         messages=[
             {"role": "system", "content": """
-            Eres un asistente que clasifica el mensaje en las siguientes categorías:
-- Cambio de especialidad
-- Certificado de notas
-- Convalidación de cursos
-- Duplicado de carné universitario
-- Matrícula
-- Obtención del título profesional
-- Pago para trámites académicos no presenciales
-- Reconocimiento de cursos
-- Registro histórico de notas
-- Reincorporación
-- Retiro de cursos
-- Solicitud de constancias a la OCR
-- Transferencia interna
-- Verificación de grados y/o títulos
-
-Si no es ninguna categoría de las mencionadas, SOLO DI: "Otros".
-
-Responde únicamente con el nombre de la categoría correspondiente, sin explicaciones adicionales.
+            Cual es el titulo que mejor describe la consulta? Obligatoriamente debe ser uno de los siguientes:
+1. Cambio de especialidad
+2. Certificado de notas
+3. Convalidación de cursos
+4. Duplicado de carné universitario
+5. Matrícula
+6. Obtención del título profesional
+7. Pago para trámites académicos no presenciales
+8. Reconocimiento de cursos
+9. Registro histórico de notas
+10. Reincorporación
+11. Retiro de cursos
+12. Solicitud de constancias a la OCR
+13. Transferencia interna
+14. Verificación de grados y/o títulos
+15. Otros
+            Solo responde con el titulo correspondiente sin la numeración, nada más.
             """},
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": "La consulta es" + prompt},
         ],
         temperature=0.2,
         top_p=0.7,
@@ -524,6 +530,13 @@ def send_feedback(derivar, message_id):
   cursor.execute(query, (message_id))
   conn.commit()
   
+if "feedback_sent" not in st.session_state:
+    st.session_state.feedback_sent = False
+
+if st.session_state.feedback_sent:
+    st.session_state.feedback_sent = False
+    st.toast("Consulta derivada al administrador. Muchas gracias por ayudar a QuillaGPT!", icon=":material/check:")
+
 @st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
 def config_feedback(message_id):
   st.write("Si QuillaGPT no ha podido responder a tu consulta y deseas que fuera respondida, favor de indicarlo en el recuadro de abajo para derivar la consulta al administrador. A fin de que el administrador pueda asistirte mejor, especifique el procedimiento de interés y consecuentemente añada la consulta correspondiente. De esta manera, el administrador podrá brindarte una respuesta más precisa según el contexto especificado.")
@@ -534,6 +547,7 @@ def config_feedback(message_id):
         st.rerun()
   with col3:
     if st.button("Enviar", type="primary", use_container_width=True, args=(derivar, message_id), on_click=send_feedback):
+        st.session_state.feedback_sent = True
         st.rerun()
 
 if 'fbk' not in st.session_state:

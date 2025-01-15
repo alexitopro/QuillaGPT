@@ -37,7 +37,12 @@ def verDetalle(selected_index):
         respuesta = st.text_area("**Respuesta**", placeholder="Ingrese la respuesta a la consulta...")
         col1, col2 = st.columns([4, 2])
         with col2:
-            if st.button("Guardar cambios", type="primary"):
+            if 'query_resolved_button' in st.session_state and st.session_state.query_resolved_button == True:
+                st.session_state.query_running = True
+            else:
+                st.session_state.query_running = False
+
+            if st.button("Guardar cambios", type="primary", key="query_resolved_button", disabled=st.session_state.query_running):
                 cursor = conn.cursor()
                 query = """
                     UPDATE RequestQuery
