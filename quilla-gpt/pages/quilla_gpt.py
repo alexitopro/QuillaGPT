@@ -312,6 +312,8 @@ with st.sidebar:
         config_user()
     if st.button("Cerrar sesión", use_container_width=True, type="primary", icon=":material/logout:"):
         st.session_state["username"] = ""
+        st.session_state["user"] = None
+        st.session_state["credentials"] = None
         st.switch_page('main.py')
 
 #contenedor para los mensajes de chat

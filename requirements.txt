@@ -19,3 +19,4 @@ mysqlclient
 SQLAlchemy
 pymysql
 pandas
+google-auth-oauthlib
