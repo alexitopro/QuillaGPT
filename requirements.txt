@@ -20,3 +20,7 @@ SQLAlchemy
 pymysql
 pandas
 google-auth-oauthlib
+streamlit-community-navigation-bar
+fastapi
+pydantic
+uvicorn

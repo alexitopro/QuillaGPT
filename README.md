@@ -13,13 +13,13 @@ You can install the required dependencies by running the following command in yo
 ```
 pip install -r requirements.txt
 ```
-You then run scraper.py inside scraper folder to retrieve foundational data from the selected sources
+You then run the FastApi server before the main web application inside the fastapi folder
 ```
-python3 scraper.py
+uvicorn main:app --reload
 ```
-You then create the embeddings and place them inside the Pinecone vector database
+Finally, run the main web application inside quilla-gpt folder
 ```
-python3 create_embeddings.py
+streamlit run main.py
 ```
 ## Contributing
 This repository is intended only for educational purposes.

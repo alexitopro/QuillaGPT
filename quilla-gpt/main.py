@@ -4,11 +4,15 @@ from google.oauth2 import id_token
 from google_auth_oauthlib.flow import InstalledAppFlow
 import pymysql
 from streamlit_extras.stylable_container import stylable_container
+import requests as req
+import json
 
 if "user" not in st.session_state:
     st.session_state.user = None
 if "credentials" not in st.session_state:
     st.session_state.credentials = None
+if "role_id" not in st.session_state:
+    st.session_state.role_id = None
 
 flow = InstalledAppFlow.from_client_secrets_file(
     "./client_secret.json",
@@ -80,19 +84,15 @@ if not st.session_state.user:
 
         st.stop()
 
-# if st.sidebar.button("Logout", type="primary"):
-#     st.session_state["user"] = None
-#     st.session_state["credentials"] = None
-#     st.rerun()
-
-# st.header(f"Hello {st.session_state.user['given_name']}")
-# st.image(st.session_state.user["picture"])
-
-# with st.sidebar:
-#     st.subheader("User info")
-#     st.json(st.session_state.user)
-
-if "username" not in st.session_state:
-    st.session_state["username"] = ""
-st.session_state["username"] = st.session_state.user["given_name"]
-st.switch_page('./pages/quilla_gpt.py')
+result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user["email"]}")
+if result.status_code == 200:
+    if result.json() != -1:
+        print("Se procede a iniciar sesión con el rol del usuario")
+        st.session_state.role_id = result.json()[1]
+    else:
+        print("Se procede a crear un nuevo usuario con rol de estudiante")
+        input = {"email" : st.session_state.user["email"]}
+        result = req.post(url="http://127.0.0.1:8000/User", data = json.dumps(input))
+        st.session_state.role_id = 2
+    st.session_state["username"] = st.session_state.user["given_name"]
+    st.switch_page('./pages/quillagpt.py')
