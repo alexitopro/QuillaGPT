@@ -178,3 +178,47 @@ def actualizar_feedback(actualizar_feedback: ActualizarFeedback):
     """
     cursor.execute(query, (actualizar_feedback.positivo, actualizar_feedback.message_id,))
     conn.commit()
+
+class ObtenerUsuarios(BaseModel):
+    rol: str
+    estado: str
+    email: str
+
+@app.get("/ObtenerUsuarios", status_code=status.HTTP_200_OK)
+def get_users(usuario: ObtenerUsuarios):
+    query = """
+        SELECT 
+            u.user_id AS 'ID',
+            u.email AS 'Correo electrónico', 
+            r.name AS 'Rol', 
+            CASE WHEN u.active = 1 THEN 'Activo' ELSE 'Inactivo' END AS 'Estado'
+        FROM User u
+        INNER JOIN Role r ON u.role_id = r.role_id
+        WHERE (%s = 'Todos' OR r.name = %s)
+        AND (%s = 'Todos' OR u.active = %s)
+        AND (%s = '' OR u.email LIKE %s)
+        ORDER BY u.user_id
+    """
+    values = (
+        usuario.rol, usuario.rol, 
+        usuario.estado, 1 if usuario.estado == 'Activo' else 0 if usuario.estado == 'Inactivo' else None,
+        usuario.email, f"%{usuario.email}%"
+    )
+    cursor.execute(query, values)
+    data = cursor.fetchall()
+    return data
+
+class CambiarRolUsuario(BaseModel):
+    email: str
+    rol: str
+
+@app.put("/User/CambiarRolUsuario", status_code=status.HTTP_200_OK)
+def cambiarRolUsuario(usuario: CambiarRolUsuario):
+    query = """
+        UPDATE User 
+        SET role_id = %s 
+        WHERE email = %s 
+        AND active = 1
+    """
+    cursor.execute(query, (1 if usuario.rol == "Administrador" else 2, usuario.email))
+    conn.commit()

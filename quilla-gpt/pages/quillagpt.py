@@ -44,7 +44,7 @@ styles = {
 }
 
 icons = {
-    "Mi cuenta": ":material/account_circle:",
+    "Configuración": ":material/settings:",
     "Cerrar sesión": ":material/logout:",
     "Panel de Administrador": ":material/switch_account:",
 }
@@ -54,24 +54,27 @@ st.set_page_config(
     page_title = "QuillaGPT"
 )
 
+if "page_session" not in st.session_state:
+    st.session_state.page_session = " "
+
 # CONTENIDO DEL NAV BAR
 if st.session_state.role_id == 1:
     page = st_navbar(
         [],
-        right=["Panel de Administrador", "Mi cuenta", "Cerrar sesión"],
+        right=[" ", "Panel de Administrador", "Configuración", "Cerrar sesión"],
         styles=styles,
         icons=icons,
         options={"fix_shadow": False},
-        selected=None,
+        selected= st.session_state.page_session
     )
 else:
     page = st_navbar(
         [],
-        right=["Configuración", "Cerrar sesión"],
+        right=[" ", "Configuración", "Cerrar sesión"],
         styles=styles,
         icons=icons,
         options={"fix_shadow": False},
-        selected=None,
+        selected= st.session_state.page_session
     )
 
 # incicializar pinecone
@@ -131,24 +134,36 @@ if st.session_state.conversation_delete:
     st.toast("Todas las conversaciones fueron eliminadas exitosamente.", icon=":material/check:")
 
 #modal de configuracion del usuario
-@st.dialog("Mi cuenta")
+@st.dialog("Configuración")
 def config_user():
-    col1, col2, col3 = st.columns([1, 0.75, 1])
-    with col2:
-        st.image(st.session_state.user["picture"], width=100)
-    st.text_input("**Nombre de usuario**", value=st.session_state["username"], disabled=True)
-    st.text_input("**Correo electrónico**", value=st.session_state.user["email"], disabled=True)
-    st.text_input("**Rol**", value="Administrador" if st.session_state.role_id == 1 else "Estudiante", disabled=True)
+    tab1, tab2 = st.tabs(["Mi cuenta", "Conversaciones"])
+    with tab1:
+        col1, col2, col3 = st.columns([1, 0.75, 1])
+        with col2:
+            st.image(st.session_state.user["picture"], width=100)
+        st.text_input("**Nombre de usuario**", value=st.session_state["username"], disabled=True)
+        st.text_input("**Correo electrónico**", value=st.session_state.user["email"], disabled=True)
+        st.text_input("**Rol**", value="Administrador" if st.session_state.role_id == 1 else "Estudiante", disabled=True)
+    with tab2:
+        if st.button("Eliminar todas las conversaciones"):
+            delete_conversations(st.session_state.user["email"])
+            st.session_state.conversation_delete = True
+            st.session_state.feedback_response = False
+            st.rerun()
 
-# Handle dialog state
-if page == "Mi cuenta":
+if page == "Configuración":
     config_user()
+    st.session_state.page_session = "Configuración"
 elif page == "Cerrar sesión":
     st.session_state["username"] = ""
     st.session_state.messages = []
     st.session_state["user"] = None
     st.session_state["credentials"] = None
+    st.session_state.feedback_response = False
+    st.session_state.page_session = " "
     st.switch_page('main.py')
+elif page == "Panel de Administrador":
+    st.switch_page('./pages/dashboard_users.py')
 
 #inicializar historial de mensajes
 if "messages" not in st.session_state:
@@ -222,6 +237,7 @@ with st.sidebar:
         for session in sessions:
             if st.button(session[0], use_container_width = True, type="secondary", key=session[1]):
                 result = req.get(f"http://127.0.0.1:8000/Message/ObtenerMensajesSesion/{session[1]}")
+                st.session_state.page_session = " "
                 messages = result.json()
                 st.session_state.messages = []
                 for message in messages:

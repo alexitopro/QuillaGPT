@@ -89,10 +89,12 @@ if result.status_code == 200:
     if result.json() != -1:
         print("Se procede a iniciar sesión con el rol del usuario")
         st.session_state.role_id = result.json()[1]
+        st.session_state["username"] = st.session_state.user["given_name"]
+        st.switch_page('./pages/quillagpt.py')
     else:
         print("Se procede a crear un nuevo usuario con rol de estudiante")
         input = {"email" : st.session_state.user["email"]}
         result = req.post(url="http://127.0.0.1:8000/User", data = json.dumps(input))
         st.session_state.role_id = 2
-    st.session_state["username"] = st.session_state.user["given_name"]
-    st.switch_page('./pages/quillagpt.py')
+        st.session_state["username"] = st.session_state.user["given_name"]
+        st.switch_page('./pages/onboarding_p1.py')
