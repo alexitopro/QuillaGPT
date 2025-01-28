@@ -255,7 +255,7 @@ def get_file(document_name: str):
         SELECT 
             file_id as 'ID',
             name as 'Nombre de documento',
-            ROUND(LENGTH(content) / 1024, 2) AS 'Tamaño del documento (KB)',
+            ROUND(LENGTH(content) / (1024 * 1024), 2) AS 'Tamaño del documento (MB)',
             register_date as 'Fecha de registro'
         FROM File
         WHERE active = 1 AND name LIKE %s
@@ -270,7 +270,7 @@ def get_file():
         SELECT 
             file_id as 'ID',
             name as 'Nombre de documento',
-            ROUND(LENGTH(content) / 1024, 2) AS 'Tamaño del documento (KB)',
+            ROUND(LENGTH(content) / (1024 * 1024), 2) AS 'Tamaño del documento (MB)',
             register_date as 'Fecha de registro'
         FROM File
         WHERE active = 1
@@ -278,3 +278,39 @@ def get_file():
     cursor.execute(select_query)
     result = cursor.fetchall()
     return result
+
+@app.get("/CustomInstruction/", status_code=status.HTTP_200_OK)
+def get_custom_instruction():
+    select_query = "SELECT instruction FROM CustomInstruction WHERE active = 1"
+    cursor.execute(select_query)
+    result = cursor.fetchone()
+    return result
+
+@app.get("/ListarInstruccionesInactivas", status_code=status.HTTP_200_OK)
+def list_custom_instruction():
+    select_query = """
+        SELECT instruction, "Inactivo" FROM CustomInstruction WHERE active = 0 ORDER BY custom_instruction_id DESC
+    """
+    cursor.execute(select_query)
+    result = cursor.fetchall()
+    return result
+
+class InsertarInstruccion(BaseModel):
+    instruccion: str
+
+@app.post("/CustomInstruction", status_code=status.HTTP_201_CREATED)
+def create_custom_instruction(instruction: InsertarInstruccion):
+    query = """
+        UPDATE CustomInstruction
+        SET active = 0
+        WHERE active = 1
+    """
+    cursor.execute(query)
+    conn.commit()
+
+    query = """
+        INSERT INTO CustomInstruction (instruction, active)
+        VALUES (%s, 1)
+    """
+    cursor.execute(query, (instruction.instruccion,))
+    conn.commit()

@@ -200,9 +200,9 @@ with tab2:
     else:
         result_files = req.get(f"http://127.0.0.1:8000/File/{document_name}")
     data_files = result_files.json()
-    df = pd.DataFrame(data_files, columns = ['ID', 'Nombre de documento', 'Tamaño del documento (KB)', 'Fecha de registro'])
+    df = pd.DataFrame(data_files, columns = ['ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro'])
     df["Seleccionar"] = False
-    df = df[['Seleccionar', 'ID', 'Nombre de documento', 'Tamaño del documento (KB)', 'Fecha de registro']]
+    df = df[['Seleccionar', 'ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro']]
 
     selected = st.data_editor(
         data = df,
@@ -213,7 +213,7 @@ with tab2:
                 default=False,
             )
         },
-        disabled=['ID', 'Nombre de documento', 'Tamaño del documento (KB)', 'Fecha de registro'],
+        disabled=['ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro'],
         hide_index=True,
         use_container_width=True
     )
@@ -224,6 +224,51 @@ with tab2:
         for idx, row in selected.iterrows()
         if row["Seleccionar"]
     ]
+
+with tab3:
+    if "disabled" not in st.session_state:
+        st.session_state["disabled"] = True
+    if "text" not in st.session_state:
+        st.session_state.text = ""
+    def disable_instructions():
+        st.session_state["disabled"] = not st.session_state["disabled"]
+
+    result_files = req.get("http://127.0.0.1:8000/CustomInstruction/")
+    data = result_files.json()
+
+    if not st.session_state.text and data:
+        st.session_state.text = data
+
+    def cancel_instructions():
+        st.session_state.text = data
+        disable_instructions()
+
+    def save_instructions(instrucciones):
+        if not st.session_state["disabled"]:
+            input = {"instruccion" : instrucciones}
+            req.post(url = "http://127.0.0.1:8000/CustomInstruction", data = json.dumps(input))
+            st.toast("Las instrucciones personalizadas se han guardado exitosamente", icon=":material/check:")
+            st.session_state.text = instrucciones
+        disable_instructions()
+
+    st.write("Las instrucciones personalizadas permiten compartir lo que quieras que QuillaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las  conversaciones nuevas que los estudiantes de la PUCP tengan con ella.")
+
+    instrucciones = st.text_area("**Instrucciones personalizadas**", height=500, max_chars=None, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
+
+    col1, col2, col3 = st.columns([8, 2, 2])
+    with col2:
+        if not st.session_state["disabled"]:
+            st.button("Cancelar" if st.session_state["disabled"] else "Cancelar instrucciones", type="secondary", on_click=cancel_instructions, use_container_width=True)
+    with col3:
+        st.button("Editar instrucciones" if st.session_state["disabled"] else "Guardar instrucciones", type="primary", on_click=save_instructions, use_container_width=True, args=(instrucciones, ))
+
+    st.subheader("Historial de instrucciones personalizadas")
+
+    result_instrucciones = req.get(url="http://127.0.0.1:8000/ListarInstruccionesInactivas")
+    data_instrucciones = result_instrucciones.json()
+
+    df = pd.DataFrame(data_instrucciones, columns = ['Instrucción', 'Estado'])
+    st.table(df)
 
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
