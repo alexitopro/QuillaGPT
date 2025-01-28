@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import pymysql
 import os
 from datetime import datetime
+from typing import Optional
 
 conn = pymysql.connect(
     host=os.getenv("MYSQL_HOST"),
@@ -222,3 +223,58 @@ def cambiarRolUsuario(usuario: CambiarRolUsuario):
     """
     cursor.execute(query, (1 if usuario.rol == "Administrador" else 2, usuario.email))
     conn.commit()
+
+class CargarDocumento(BaseModel):
+    contenido: bytes
+    filename: str
+    current_date: str
+
+@app.post("/CargarDocumento", status_code=status.HTTP_201_CREATED)
+def cargar_documento(documento: CargarDocumento):
+    query = """
+        INSERT INTO File (content, name, register_date, type, active)
+        VALUES (%s, %s, %s, %s, 1)
+    """
+    cursor.execute(query, (documento.contenido, documento.filename, documento.current_date, 'DocumentoAdicional'))
+    conn.commit()
+    return cursor.lastrowid
+
+@app.delete("/File/{file_id}", status_code = status.HTTP_200_OK)
+def delete_conversations(file_id: int):
+    delete_query = """
+        UPDATE File
+        SET active = 0
+        WHERE file_id = %s
+    """
+    cursor.execute(delete_query, (file_id,))
+    conn.commit()
+
+@app.get("/File/{document_name}", status_code=status.HTTP_200_OK)
+def get_file(document_name: str):
+    select_query = """
+        SELECT 
+            file_id as 'ID',
+            name as 'Nombre de documento',
+            ROUND(LENGTH(content) / 1024, 2) AS 'Tamaño del documento (KB)',
+            register_date as 'Fecha de registro'
+        FROM File
+        WHERE active = 1 AND name LIKE %s
+    """
+    cursor.execute(select_query, (f"%{document_name}%",))
+    result = cursor.fetchall()
+    return result
+
+@app.get("/File/", status_code=status.HTTP_200_OK)
+def get_file():
+    select_query = """
+        SELECT 
+            file_id as 'ID',
+            name as 'Nombre de documento',
+            ROUND(LENGTH(content) / 1024, 2) AS 'Tamaño del documento (KB)',
+            register_date as 'Fecha de registro'
+        FROM File
+        WHERE active = 1
+    """
+    cursor.execute(select_query)
+    result = cursor.fetchall()
+    return result

@@ -3,11 +3,13 @@ from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
 import pandas as pd
+from datetime import datetime
 from utils.document_embedding_process import procesar_arch_db
 from utils.document_vectordb_deletion import eliminar_arch_db
 from utils.create_embeddings import create_web_scraping_embeddings
 from utils.scraper import scraper
 import time
+import base64
 
 #BARRA DE NAVEGACION
 styles = {
@@ -113,7 +115,7 @@ with tab1:
     - https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa
     - https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/
     """)
-    st.subheader("¿Deseas actualizar la información disponible?")
+    st.subheader("¿Deseas actualizar la información disponible?", anchor=False)
     st.write("""
 El proceso de actualización incluye los siguientes pasos:
 
@@ -131,11 +133,97 @@ Haz clic en el botón de abajo para asegurarte de tener los datos más recientes
     if st.button('Actualizar información', disabled=st.session_state.running, key='run_button', icon=":material/sync:", type="secondary"):
         status = st.progress(0, text="Extrayendo datos de la Facultad de Ciencias e Ingeniería...")
         scraper()
-        status.progress(0.50, text="Actualizando base de datos de QuillaGPT...")
+        status.progress(0.60, text="Actualizando base de datos de QuillaGPT...")
         create_web_scraping_embeddings()
         status.progress(0.99, text="Actualización completada exitosamente...")
         time.sleep(3)
         st.rerun()
+
+#conocimiento dinamico
+with tab2:
+    st.write("QuillaGPT puede utilizar otros documentos que consideres pertinentes como conocimiento adicional. Para ello, debes tomar en cuenta las siguientes consideraciones:")
+
+    st.markdown("""
+    - **Formato de archivo:** Sólo se aceptan archivos en formato PDF.
+    - **Procesamiento de contenido:** QuillaGPT solo puede leer y procesar contenido textual. Si el documento incluye imágenes, gráficos u otros elementos visuales, estos no podrán ser interpretados, ya que el sistema solo extrae texto.
+    - **Actualización de documentos:** Si subes un documento cuyo nombre del archivo ya está registrado en la base de datos, por favor elimina el documento de mayor antigüedad. Caso contrario, QuillaGPT considerará ambos documentos en sus respuestas.
+    - **Eliminación de documentos:** Si identificas uno o más documentos que ya no tienen vigencia para el ciclo académico actual, puedes seleccionarlos y eliminarlos de la base de datos.
+    """)
+
+    st.write("")
+
+    #esto es para no se vuelva a cargar
+    if "uploader_key_other" not in st.session_state:
+        st.session_state["uploader_key_other"] = []
+
+    if "documents" not in st.session_state:
+        st.session_state["documents"] = []
+
+    #cargar archivos adicionales
+    document =  st.file_uploader("**Cargar documento adicional**", type=["pdf"], key=st.session_state["uploader_key_other"])
+
+    if document is not None and document.name not in st.session_state["documents"]:
+        bytes_content = document.getvalue()
+        encoded_content = base64.b64encode(bytes_content).decode('utf-8')
+        file_name = document.name
+        current_date = datetime.now().strftime('%y-%m-%d')
+        input = {"contenido" : encoded_content, "filename" : file_name, "current_date" : current_date}
+        result = req.post(url="http://127.0.0.1:8000/CargarDocumento", data = json.dumps(input))
+        file_id = result.json()
+        st.toast("El archivo se ha cargado a la base de datos exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
+        #spinner mientras se actualiza en la vectorial bd
+        with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+            procesar_arch_db(document.name, document, 'DocumentoAdicional_' + str(file_id) + '_')
+            st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+            st.session_state["documents"].append(document.name)
+
+    col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
+    with col1:
+        document_name = st.text_input("**Buscar documento**", placeholder="Ingrese el nombre del archivo", max_chars=100)
+    with col2:
+        if st.button("Eliminar archivos seleccionados", type="primary", use_container_width=True):
+            if st.session_state["uploader_key_other"]:
+                for file_id in st.session_state["uploader_key_other"]:
+                    req.delete(f"http://127.0.0.1:8000/File/{file_id}")
+
+                st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
+                with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+                    for file_id in st.session_state["uploader_key_other"]:
+                        eliminar_arch_db('DocumentoAdicional_' + str(file_id) + '_')
+                    st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+                st.session_state["uploader_key_other"] = []
+            else:
+                st.toast("No se han seleccionado archivos para eliminar", icon=':material/error:')
+
+    if document_name:
+        result_files = req.get("http://127.0.0.1:8000/File/")
+    else:
+        result_files = req.get(f"http://127.0.0.1:8000/File/{document_name}")
+    data_files = result_files.json()
+    df = pd.DataFrame(data_files, columns = ['ID', 'Nombre de documento', 'Tamaño del documento (KB)', 'Fecha de registro'])
+    df["Seleccionar"] = False
+    df = df[['Seleccionar', 'ID', 'Nombre de documento', 'Tamaño del documento (KB)', 'Fecha de registro']]
+
+    selected = st.data_editor(
+        data = df,
+        column_config={
+            "Seleccionar": st.column_config.CheckboxColumn(
+                "Seleccionar",
+                help="Seleccione los documentos que desea eliminar",
+                default=False,
+            )
+        },
+        disabled=['ID', 'Nombre de documento', 'Tamaño del documento (KB)', 'Fecha de registro'],
+        hide_index=True,
+        use_container_width=True
+    )
+
+    #filtramos los usuarios seleccionados
+    st.session_state["uploader_key_other"] = [
+        row["ID"]
+        for idx, row in selected.iterrows()
+        if row["Seleccionar"]
+    ]
 
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
