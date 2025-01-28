@@ -1,0 +1,29 @@
+{
+    "url": "https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/",
+
+    "selectores": {
+        "contenedor_tramites": {
+            "tipo": "div",
+            "clase": "s-m-b-4 w-richtext"
+        },
+        "lista_tramites": {
+            "tipo": "ul"
+        },
+        "item_tramite": {
+            "tipo": "li"
+        },
+        "nombre_tramite": {
+            "tipo": "strong"
+        },
+        "link_tramite": {
+            "tipo": "a"
+        },
+        "consideraciones_adicionales": {
+            "tipo": "ul"
+        }
+    },
+
+    "keywords": {
+        "excluir": "Otros trámites en la FCI"
+    }
+}

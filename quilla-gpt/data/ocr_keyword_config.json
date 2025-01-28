@@ -1,0 +1,36 @@
+{
+    "url": "https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa",
+    "selectores": {
+        "paginacion": {
+            "tipo": "ul",
+            "clase": "pagination"
+        },
+        "item_pagina": {
+            "tipo": "li"
+        },
+        "link_pagina": {
+            "tipo": "a"
+        },
+        "contenedor_tramites": {
+            "tipo": "div",
+            "clase": "cursos-item"
+        },
+        "nombre_tramite": {
+            "tipo": "a"
+        },
+        "link_tramite": {
+            "tipo": "a"
+        },
+        "quote": {
+            "tipo": "p",
+            "clase": "text-center"
+        },
+        "info_tramite": {
+            "tipo": "div",
+            "clase": "formato"
+        },
+        "enlace_aqui": {
+            "texto": "aquí"
+        }
+    }
+}

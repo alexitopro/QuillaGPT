@@ -20,9 +20,10 @@ def create_web_scraping_embeddings():
     #cargamos la data que se usara para generar los embeddings, proviene de la carpeta data
     data = []
     for file in os.listdir("data"):
-        with open(f"data/{file}", "r") as f:
-            file_data = json.load(f)
-            data.extend(file_data)
+        if file.startswith("tramites"):
+            with open(f"data/{file}", "r") as f:
+                file_data = json.load(f)
+                data.extend(file_data)
 
     #crear embeddings para nombre
     texts = [d["nombre"] for d in data]

@@ -46,6 +46,7 @@ def login_callback():
     id_info = id_token.verify_token(
         credentials.id_token,
         requests.Request(),
+        clock_skew_in_seconds=10
     )
     st.session_state.credentials = credentials
     st.session_state.user = id_info

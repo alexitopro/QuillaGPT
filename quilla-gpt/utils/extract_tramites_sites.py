@@ -6,8 +6,11 @@ import json
 def extract_tramites_sites():
     driver = webdriver.Firefox()
 
-    #open the website
-    driver.get("https://sites.google.com/pucp.edu.pe/fci-pucp/estudiantes/atenci%C3%B3n-de-tr%C3%A1mites-acad%C3%A9micos")
+    with open('./data/sites_keyword_config.json', 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    #abrir la pagina web
+    driver.get(config['url'])
 
     #obtener el page source
     html = driver.page_source
@@ -18,13 +21,31 @@ def extract_tramites_sites():
     #arreglo donde guardare la data de los tramites
     tramites_data = []
 
-    contacto = soup.find('div', class_ = 'hJDwNd-AhqUyc-wNfPc Ft7HRd-AhqUyc-wNfPc purZT-AhqUyc-II5mzb ZcASvf-AhqUyc-II5mzb pSzOP-AhqUyc-wNfPc Ktthjf-AhqUyc-wNfPc JNdkSc SQVYQc yYI8W HQwdzb').find('div', class_ = 'JNdkSc-SmKAyb LkDMRd').find('div', class_ =  'U26fgb L7IXhc htnAL QmpIrf M9Bg4d').find('a')['href']
+    contacto = soup.find(
+        config['selectores']['contacto']['contenedor']['tipo'], 
+        class_ = config['selectores']['contacto']['contenedor']['clase']
+    ).find(
+        config['selectores']['contacto']['subcontenedor']['tipo'], 
+        class_ = config['selectores']['contacto']['subcontenedor']['clase']
+    ).find(
+        config['selectores']['contacto']['subcontenedor']['tipo'], 
+        class_ =  config['selectores']['contacto']['enlace']['clase']
+    ).find(config['selectores']['contacto']['enlace']['tipo'])['href']
 
-    tramites = soup.find('div', class_ = 'hJDwNd-AhqUyc-OwsYgb Ft7HRd-AhqUyc-OwsYgb purZT-AhqUyc-II5mzb ZcASvf-AhqUyc-II5mzb pSzOP-AhqUyc-qWD73c Ktthjf-AhqUyc-qWD73c JNdkSc SQVYQc yYI8W HQwdzb').find('div', class_ = 'JNdkSc-SmKAyb LkDMRd').find_all('div', 'oKdM2c ZZyype')
+    tramites = soup.find(
+        config['selectores']['tramites']['contenedor']['tipo'], 
+        class_ = config['selectores']['tramites']['contenedor']['clase']
+    ).find(
+        config['selectores']['tramites']['subcontenedor']['tipo'], 
+        class_ = config['selectores']['tramites']['subcontenedor']['clase']
+    ).find_all(
+        config['selectores']['tramites']['item_tramite']['tipo'], 
+        config['selectores']['tramites']['item_tramite']['clase']
+    )
 
     for tramite in tramites:
-        nombre_tramite = tramite.find('a').find('p').get_text()
-        link_tramite = tramite.find('a')['href']
+        nombre_tramite = tramite.find(config['selectores']['tramites']['link_tramite']['tipo']).find(config['selectores']['tramites']['nombre_tramite']['tipo']).get_text()
+        link_tramite = tramite.find(config['selectores']['tramites']['link_tramite']['tipo'])['href']
         tramite_data = {
             'nombre': nombre_tramite,
             'link': link_tramite,

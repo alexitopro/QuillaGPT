@@ -6,8 +6,11 @@ import json
 def extract_tramites_ocr():
     driver = webdriver.Firefox()
 
-    #open the website
-    driver.get("https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa")
+    with open('./data/ocr_keyword_config.json', 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    #abrir la pagina web
+    driver.get(config['url'])
 
     #obtener el page source
     html = driver.page_source
@@ -20,23 +23,32 @@ def extract_tramites_ocr():
     tramites_data = []
 
     #recorrer cada pagina de tramites
-    paginas = soup.find('ul', class_ = 'pagination').find_all('li')
+    paginas = soup.find(
+        config['selectores']['paginacion']['tipo'], 
+        class_ =  config['selectores']['paginacion']['clase']
+    ).find_all(config['selectores']['item_pagina']['tipo'])
+
     for pagina in paginas:
-        link = pagina.find('a')
+        link = pagina.find(config['selectores']['link_pagina']['tipo'])
+
+        #si el link no es la primera pagina guardarla
         if link.text != '1':
             driver.get(link['href'])
             html = driver.page_source
             soup = BeautifulSoup(html, 'html.parser')
 
         #encontrar los divs que tengan los tramites
-        tramites = soup.find_all('div', class_ = 'cursos-item')
+        tramites = soup.find_all(
+            config['selectores']['contenedor_tramites']['tipo'], 
+            class_ = config['selectores']['contenedor_tramites']['clase']
+        )
 
         #iterar sobre los tramites
         for tramite in tramites:
             #obtener el nombre del tramite
-            nombre_tramite = tramite.find('a').text
+            nombre_tramite = tramite.find(config['selectores']['nombre_tramite']['tipo']).text
             #obtener el link del tramite
-            link_tramite = tramite.find('a')['href']
+            link_tramite = tramite.find(config['selectores']['link_tramite']['tipo'])['href']
             #abrir el link del tramite
             driver.get(link_tramite)
             #obtener el page source del tramite
@@ -44,15 +56,21 @@ def extract_tramites_ocr():
             #realizar acciones en el webpage del tramite
             soup_tramite = BeautifulSoup(html_tramite, 'html.parser')
             #obtener el p que tenga la clase text center
-            quote = soup_tramite.find('p', class_ = 'text-center')
+            quote = soup_tramite.find(
+                config['selectores']['quote']['tipo'], 
+                class_ = config['selectores']['quote']['clase']
+            )
             #obtener informacion del tramite como tal
-            info_tramite = soup_tramite.find('div', class_ = 'formato')
+            info_tramite = soup_tramite.find(
+                config['selectores']['info_tramite']['tipo'], 
+                class_ = config['selectores']['info_tramite']['clase']
+            )
 
             info_tramite_text = ''
             info_tramite_text = info_tramite.text.strip()
 
             for link in info_tramite.find_all('a'):
-                if "aquí" in link.text.lower():
+                if config['selectores']['enlace_aqui']['texto'] in link.text.lower():
                     #reemplaza solo el texto "aquí"por el enlace correspondiente
                     info_tramite_text = info_tramite.get_text()
                     link_text = link.text

@@ -6,8 +6,11 @@ import json
 def extract_tramites_fci():
     driver = webdriver.Firefox()
 
-    #open the website
-    driver.get("https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/")
+    with open('./data/fci_keyword_config.json', 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    #abrir la pagina web
+    driver.get(config['url'])
 
     #obtener el page source
     html = driver.page_source
@@ -18,16 +21,22 @@ def extract_tramites_fci():
     #arreglo donde guardare la data de los tramites
     tramites_data = []
 
-    tramites_source = soup.find('div', class_ = 's-m-b-4 w-richtext')
+    tramites_source = soup.find(
+        config['selectores']['contenedor_tramites']['tipo'], 
+        class_ = config['selectores']['contenedor_tramites']['clase']
+    )
 
-    tramites = tramites_source.find('ul').find_all('li', recursive=False)
+    tramites = tramites_source.find(config['selectores']['lista_tramites']['tipo']).find_all(config['selectores']['item_tramite']['tipo'], recursive=False)
+
     for tramite in tramites:
-        nombre_tramite = tramite.find('strong').get_text()
-        if (nombre_tramite != 'Otros trámites en la FCI'):
-            link_tramite = tramite.find('a')['href'] if tramite.find('a').find('strong') else ''
+        nombre_tramite = tramite.find(config['selectores']['nombre_tramite']['tipo']).get_text()
+        
+        if (nombre_tramite != config['keywords']['excluir']):
+            link_tramite = tramite.find(config['selectores']['link_tramite']['tipo'])['href'] if tramite.find(config['selectores']['link_tramite']['tipo']).find(config['selectores']['nombre_tramite']['tipo']) else ''
+            
             consideraciones_adicionales = ''
-            if tramite.find('ul'):
-                consideraciones_adicionales = tramite.find('ul').get_text()
+            if tramite.find(config['selectores']['consideraciones_adicionales']['tipo']):
+                consideraciones_adicionales = tramite.find(config['selectores']['consideraciones_adicionales']['tipo']).get_text()
 
             tramite_data = {
                 'nombre': nombre_tramite,
@@ -40,11 +49,13 @@ def extract_tramites_fci():
     tramites = tramites_source.find_all('p')
     for tramite in tramites:
         if tramite.find('a'):
-            nombre_tramite = tramite.find('strong').get_text()
-            link_tramite = tramite.find('a')['href'] if tramite.find('a').find('strong') or tramite.find('strong').find('a') else ''
+            nombre_tramite = tramite.find(config['selectores']['nombre_tramite']['tipo']).get_text()
+
+            link_tramite = tramite.find(config['selectores']['link_tramite']['tipo'])['href'] if tramite.find(config['selectores']['link_tramite']['tipo']).find(config['selectores']['nombre_tramite']['tipo']) or tramite.find(config['selectores']['nombre_tramite']['tipo']).find(config['selectores']['link_tramite']['tipo']) else ''
+
             consideraciones_adicionales = ''
-            if tramite.find('ul'):
-                consideraciones_adicionales = tramite.find('ul').get_text()
+            if tramite.find(config['selectores']['consideraciones_adicionales']['tipo']):
+                consideraciones_adicionales = tramite.find(config['selectores']['consideraciones_adicionales']['tipo']).get_text()
 
             tramite_data = {
                 'nombre': nombre_tramite,

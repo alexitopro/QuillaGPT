@@ -1,0 +1,41 @@
+{
+    "url": "https://sites.google.com/pucp.edu.pe/fci-pucp/estudiantes/atenci%C3%B3n-de-tr%C3%A1mites-acad%C3%A9micos",
+    "selectores": {
+        "contacto": {
+            "contenedor": {
+                "tipo": "div",
+                "clase": "hJDwNd-AhqUyc-wNfPc Ft7HRd-AhqUyc-wNfPc purZT-AhqUyc-II5mzb ZcASvf-AhqUyc-II5mzb pSzOP-AhqUyc-wNfPc Ktthjf-AhqUyc-wNfPc JNdkSc SQVYQc yYI8W HQwdzb"
+            },
+            "subcontenedor": {
+                "tipo": "div",
+                "clase": "JNdkSc-SmKAyb LkDMRd"
+            },
+            "enlace": {
+                "tipo": "a",
+                "clase": "U26fgb L7IXhc htnAL QmpIrf M9Bg4d"
+            }
+        },
+        "tramites": {
+            "contenedor": {
+                "tipo": "div",
+                "clase": "hJDwNd-AhqUyc-OwsYgb Ft7HRd-AhqUyc-OwsYgb purZT-AhqUyc-II5mzb ZcASvf-AhqUyc-II5mzb pSzOP-AhqUyc-qWD73c Ktthjf-AhqUyc-qWD73c JNdkSc SQVYQc yYI8W HQwdzb"
+            },
+            "subcontenedor": {
+                "tipo": "div",
+                "clase": "JNdkSc-SmKAyb LkDMRd"
+            },
+            "item_tramite": {
+                "tipo": "div",
+                "clase": "oKdM2c ZZyype"
+            },
+            "nombre_tramite": {
+                "tipo": "p",
+                "clase": ""
+            },
+            "link_tramite": {
+                "tipo": "a",
+                "clase": ""
+            }
+        }
+    }
+}

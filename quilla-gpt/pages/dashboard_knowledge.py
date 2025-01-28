@@ -3,6 +3,11 @@ from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
 import pandas as pd
+from utils.document_embedding_process import procesar_arch_db
+from utils.document_vectordb_deletion import eliminar_arch_db
+from utils.create_embeddings import create_web_scraping_embeddings
+from utils.scraper import scraper
+import time
 
 #BARRA DE NAVEGACION
 styles = {
@@ -46,38 +51,6 @@ if "page_session" not in st.session_state:
 #crear la variable de ID tabla para poder reiniciar la seleccion
 if "tabla_id" not in st.session_state:
     st.session_state.tabla_id = 0
-
-if "bandera" not in st.session_state:
-    st.session_state.bandera = False
-
-#modal para revisar la consulta del estudiante
-@st.dialog("Detalle del usuario")
-def verDetalle(selected_index):
-    st.text_input("**Correo electrónico**", value=df.loc[selected_index, "Correo electrónico"], disabled=True)
-
-    rol_detalle = st.selectbox("**Rol**",  ["Administrador", "Estudiante"], disabled=True if df.loc[selected_index, "Correo electrónico"] == st.session_state.user["email"] else False, index=0 if df.loc[selected_index, "Rol"] == "Administrador" else 1)
-
-    st.text_input("**Estado**", value=df.loc[selected_index, "Estado"], disabled=True)
-
-    st.write("")
-    col1, col2, col3 = st.columns([2, 3, 3])
-    with col2:
-        if st.button("Cancelar", use_container_width=True, type="secondary"):
-            st.session_state.tabla_id += 1
-            st.rerun()
-    with col3:
-        submitted = st.button("Guardar cambios", use_container_width=True, type="primary", disabled=True if df.loc[selected_index, "Correo electrónico"] == st.session_state.user["email"] else False)
-        if submitted:
-            input = {"email" : df.loc[selected_index, "Correo electrónico"], "rol" : rol_detalle}
-            req.put(f"http://127.0.0.1:8000/User/CambiarRolUsuario", data = json.dumps(input))
-            st.session_state.tabla_id += 1
-        
-            st.session_state.bandera = True
-            st.rerun()
-
-if st.session_state.bandera:
-    st.toast("Se ha actualizado el rol del usuario", icon=":material/check:")
-    st.session_state.bandera = False
 
 # CONTENIDO DEL NAV BAR
 page = st_navbar(
@@ -128,45 +101,51 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
-container_inicio.title("Gestión de Usuarios")
+container_inicio.title("Gestión de Conocimiento")
 
-#contenido
-col1, col2, col3 = st.columns([2.5, 1.5, 1], vertical_alignment="bottom")
-with col1:
-    usuario = st.text_input("**Buscar usuario**", placeholder="Ingrese el correo del usuario", max_chars=50)
-with col2:
-    rol = st.selectbox("**Rol**", ["Todos", "Administrador", "Estudiante"])
-with col3:
-    estado = st.selectbox("**Estado**", ["Todos", "Activo", "Inactivo"])
+tab1, tab2, tab3 = st.tabs(["Conocimiento inicial", "Conocimiento dinámico", "Instrucciones personalizadas"])
 
-input = {"email" : usuario, "rol" : rol, "estado" : estado}
-result = req.get(url="http://127.0.0.1:8000/ObtenerUsuarios", data = json.dumps(input))
-data = result.json()
-df = pd.DataFrame(data, columns=["ID", "Correo electrónico", "Rol", "Estado"])
+#conocimiento inicial
+with tab1:
+    st.write("QuillaGPT tiene en cuenta la información de los procesos académicos y administrativos disponibles públicamente en las siguientes páginas web:")
+    st.markdown("""
+    - https://sites.google.com/pucp.edu.pe/fci-pucp/estudiantes
+    - https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa
+    - https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/
+    """)
+    st.subheader("¿Deseas actualizar la información disponible?")
+    st.write("""
+El proceso de actualización incluye los siguientes pasos:
 
-event = st.dataframe(
-    df,
-    on_select="rerun",
-    selection_mode=["single-row"],
-    hide_index=True,
-    key = str(st.session_state.tabla_id),
-    use_container_width=True
-)
+1. Revisión automática de las páginas previamente mencionadas.
+2. Identificación y extracción de los trámites y procesos administrativos según la página correspondiente.
+3. Almacenamiento de datos en la base de datos para que QuillaGPT pueda utilizarlos en respuestas a consultas de los estudiantes.
 
-if event.selection is not None:
-    if event.selection['rows']:
-        selected_index = event.selection['rows'][0]
-        verDetalle(selected_index)
+Haz clic en el botón de abajo para asegurarte de tener los datos más recientes. Recuerda que este proceso puede tardar algunos minutos en completarse.""")
+
+    if 'run_button' in st.session_state and st.session_state.run_button == True:
+        st.session_state.running = True
+    else:
+        st.session_state.running = False
+
+    if st.button('Actualizar información', disabled=st.session_state.running, key='run_button', icon=":material/sync:", type="secondary"):
+        status = st.progress(0, text="Extrayendo datos de la Facultad de Ciencias e Ingeniería...")
+        scraper()
+        status.progress(0.50, text="Actualizando base de datos de QuillaGPT...")
+        create_web_scraping_embeddings()
+        status.progress(0.99, text="Actualización completada exitosamente...")
+        time.sleep(3)
+        st.rerun()
 
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
-    
+
     st.write("")
+    
+    if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
+        st.switch_page("./pages/dashboard_users.py")
 
-    st.button("Gestión de Usuarios", use_container_width=True, icon=":material/group:", disabled=True)
-
-    if st.button("Gestión de Conocimiento", use_container_width=True, type="secondary", icon=":material/description:"):
-        st.switch_page("./pages/dashboard_knowledge.py")
+    st.button("Gestión de Conocimiento", use_container_width=True, icon=":material/description:", disabled=True)
 
     if st.button("Solicitudes de Soporte", use_container_width=True, type="secondary", icon=":material/question_answer:"):
         st.switch_page("./pages/dashboard_queries.py")
