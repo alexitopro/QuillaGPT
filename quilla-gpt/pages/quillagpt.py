@@ -408,7 +408,7 @@ def send_feedback(derivar, message_id):
     input = {"derivar" : derivar, "message_id" : message_id, "email" : st.session_state.user["email"]}
     req.post(url="http://127.0.0.1:8000/RequestQuery", data = json.dumps(input))
     input = {"message_id" : message_id, "derivado" : 1}
-    req.post(url="http://127.0.0.1:8000/ActualizarDerivado", data = json.dumps(input))
+    req.put(url="http://127.0.0.1:8000/ActualizarDerivado", data = json.dumps(input))
   
 if "feedback_sent" not in st.session_state:
     st.session_state.feedback_sent = False

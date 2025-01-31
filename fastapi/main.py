@@ -360,3 +360,96 @@ def request_resolution(solicitud_resolucion: SolicitudResolucion):
     """
     cursor.execute(query, (solicitud_resolucion.respuesta, solicitud_resolucion.id))
     conn.commit()
+
+@app.get("/ObtenerCantConversaciones", status_code=status.HTTP_200_OK)
+def get_conversations_amount():
+    query = """
+        SELECT COUNT(*)
+        FROM Session
+        WHERE
+            start_session >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+            AND start_session < DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+    """
+    cursor.execute(query)
+    result = cursor.fetchone()[0]
+    return result
+
+@app.get("/RatioConsultasDerivadas", status_code=status.HTTP_200_OK)
+def get_ratio_derived_queries():
+    query = """
+        SELECT 
+            ROUND((COUNT(CASE WHEN derived = 1 THEN 1 END) * 100.0 / COUNT(*)), 2) AS porcentaje_consultas_derivadas
+        FROM 
+            Message
+        WHERE 
+        register_date >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01') 
+        AND register_date < DATE_FORMAT(CURRENT_DATE + INTERVAL 1 MONTH, '%Y-%m-01') AND active = 1 AND role = 'assistant';
+    """
+    cursor.execute(query)
+    result = cursor.fetchone()[0]
+    return result
+
+@app.get("/PromedioEstudiantesActivos", status_code=status.HTTP_200_OK)
+def get_active_students_average():
+    query = """
+        SELECT 
+            AVG(d.conteo_usuario) AS prom_usuario_activos
+        FROM (
+            SELECT 
+                DATE(start_session) AS dia_interaccion,
+                COUNT(DISTINCT user_id) AS conteo_usuario
+            FROM 
+                Session
+            GROUP BY 
+                DATE(start_session)
+        ) AS d;
+    """
+    cursor.execute(query)
+    result = cursor.fetchone()[0]
+    return result
+
+@app.get("/CantidadUsuarios", status_code=status.HTTP_200_OK)
+def get_users_amount():
+    query = """
+        SELECT COUNT(*)
+        FROM User
+        WHERE active = 1
+        AND role_id = 2
+    """
+    cursor.execute(query)
+    result = cursor.fetchone()[0]
+    return result
+
+@app.get("/CantidadConsultasMes", status_code=status.HTTP_200_OK)
+def get_queries_amount():
+    query = """
+        SELECT 
+            DATE_FORMAT(register_date, '%Y-%m') AS mes,
+            COUNT(*) AS conteo_mensajes
+        FROM Message
+        WHERE active = 1 
+            AND role = 'user'
+        GROUP BY DATE_FORMAT(register_date, '%Y-%m')
+        ORDER BY mes;
+    """
+    cursor.execute(query)
+    result = cursor.fetchall()
+    return result
+
+@app.get("/Top5TemasConsulta", status_code=status.HTTP_200_OK)
+def get_top5_query_themes():
+    query = """
+        SELECT 
+            classification AS tema,
+            COUNT(*) AS cant_class
+        FROM Message
+        WHERE active = 1 
+            AND role = 'assistant'
+            AND classification != 'Otros'
+        GROUP BY classification
+        ORDER BY cant_class DESC
+        LIMIT 5
+    """
+    cursor.execute(query)
+    result = cursor.fetchall()
+    return result
