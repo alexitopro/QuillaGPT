@@ -314,3 +314,49 @@ def create_custom_instruction(instruction: InsertarInstruccion):
     """
     cursor.execute(query, (instruction.instruccion,))
     conn.commit()
+
+@app.get("/ObtenerClasificaciones", status_code=status.HTTP_200_OK)
+def get_request_query_classifications():
+    select_query = """
+        SELECT classification
+        FROM RequestQuery
+        WHERE active = 1
+        GROUP BY classification
+    """
+    cursor.execute(select_query)
+    result = cursor.fetchall()
+    return result
+
+class SolicitudesSoporte(BaseModel):
+    tema: str
+    estado: str
+
+@app.get("/ObtenerSolicitudesSoporte", status_code=status.HTTP_200_OK)
+def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
+    query = """
+        SELECT request_query_id, register_date, u.email, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
+        FROM RequestQuery r
+        JOIN User u ON r.user_id = u.user_id
+        WHERE r.active = 1 
+            AND (%s = 'Todos' OR resolved = %s)
+            AND (%s = 'Todos' OR classification = %s)
+    """
+    cursor.execute(query, (solicitudes_soporte.estado, 1 if solicitudes_soporte.estado == "Resuelta" else 0 if solicitudes_soporte.estado == "Pendiente" else None, solicitudes_soporte.tema, solicitudes_soporte.tema))
+    result = cursor.fetchall()
+    return result
+
+class SolicitudResolucion(BaseModel):
+    respuesta: str
+    id: int
+
+@app.put("/SolicitudResolucion", status_code=status.HTTP_201_CREATED)
+def request_resolution(solicitud_resolucion: SolicitudResolucion):
+    print(solicitud_resolucion.respuesta)
+    print(solicitud_resolucion.id)
+    query = """
+        UPDATE RequestQuery
+        SET reply = %s, resolved = 1
+        WHERE request_query_id = %s and active = 1
+    """
+    cursor.execute(query, (solicitud_resolucion.respuesta, solicitud_resolucion.id))
+    conn.commit()
