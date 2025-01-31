@@ -7,6 +7,7 @@ import hashlib
 import time
 import pandas as pd
 import plotly.express as px
+import datetime
 
 #BARRA DE NAVEGACION
 styles = {
@@ -95,55 +96,66 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
-container_inicio.title("Reporte de Indicadores")
+container_inicio.title("Reporte de Indicadores", anchor=False)
+
+hoy = datetime.date.today()
+primer_dia = hoy.replace(day=1)
+col1, col2 = st.columns([1, 3])
+with col1:
+    date_picker = st.date_input("**Selecciona el rango de fecha de análisis**", (primer_dia, "today"), format="DD/MM/YYYY")
+
+inicio, fin = date_picker
+print("Start Date:", inicio)
+print("End Date:", fin)
+input = {"start_date": inicio.isoformat(), "end_date": fin.isoformat()}
 
 col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
 with col1:
-    sesiones_mes = req.get("http://localhost:8000/ObtenerCantConversaciones").json()
+    sesiones_mes = req.get("http://localhost:8000/ObtenerCantConversaciones", data = json.dumps(input)).json()
     st.metric(label = "**Conversaciones en el mes**", value = sesiones_mes, border=True)
-with col2:
-    porcentaje_derivadas = req.get("http://localhost:8000/RatioConsultasDerivadas").json()
-    if porcentaje_derivadas is None:
-        porcentaje_derivadas = 0
-    st.metric(label = "**Ratio de consultas derivadas en el mes**", value = str(round(porcentaje_derivadas)) + '%', border=True)
-with col3:
-    cant_admins = req.get("http://localhost:8000/PromedioEstudiantesActivos").json()
-    if cant_admins is None:
-        cant_admins = 0
-    st.metric(label = "**Promedio de estudiantes activos**", value = int(cant_admins), border=True)
-with col4:
-    cant_usuarios = req.get("http://localhost:8000/CantidadUsuarios").json()
-    st.metric(label = "**Estudiantes registrados**", value = cant_usuarios, border=True)
+# with col2:
+#     porcentaje_derivadas = req.get("http://localhost:8000/RatioConsultasDerivadas").json()
+#     if porcentaje_derivadas is None:
+#         porcentaje_derivadas = 0
+#     st.metric(label = "**Ratio de consultas derivadas en el mes**", value = str(round(porcentaje_derivadas)) + '%', border=True)
+# with col3:
+#     cant_admins = req.get("http://localhost:8000/PromedioEstudiantesActivos").json()
+#     if cant_admins is None:
+#         cant_admins = 0
+#     st.metric(label = "**Promedio de estudiantes activos**", value = int(cant_admins), border=True)
+# with col4:
+#     cant_usuarios = req.get("http://localhost:8000/CantidadUsuarios").json()
+#     st.metric(label = "**Estudiantes registrados**", value = cant_usuarios, border=True)
 
-col1_columna, col2_columna2 = st.columns([1.5, 1])
-with col1_columna:
-    with st.container(border=True):
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            st.write("**Cantidad de Consultas por Mes**")
-        st.write("")
-        data = req.get("http://localhost:8000/CantidadConsultasMes").json()
-        df = pd.DataFrame(data, columns=["Mes", "Cantidad de Consultas"])
-        if df.empty:
-            st.caption("No se han efectuado consultas a lo largo del mes.")
-        else:
-            st.bar_chart(data = df, x = "Mes", y = "Cantidad de Consultas", height=370)
+# col1_columna, col2_columna2 = st.columns([1.5, 1])
+# with col1_columna:
+#     with st.container(border=True):
+#         col1, col2, col3 = st.columns([1, 1, 1])
+#         with col2:
+#             st.write("**Cantidad de Consultas por Mes**")
+#         st.write("")
+#         data = req.get("http://localhost:8000/CantidadConsultasMes").json()
+#         df = pd.DataFrame(data, columns=["Mes", "Cantidad de Consultas"])
+#         if df.empty:
+#             st.caption("No se han efectuado consultas a lo largo del mes.")
+#         else:
+#             st.bar_chart(data = df, x = "Mes", y = "Cantidad de Consultas", height=370)
 
-with col2_columna2:
-    with st.container(border=True):
-        col1, col2, col3 = st.columns([1, 1.5, 1])
-        with col2:
-            st.write("**Top 5 Temas de Consulta**")
-        data = req.get("http://localhost:8000/Top5TemasConsulta").json()
-        df = pd.DataFrame(data, columns=["Tema", "Cantidad de Consultas"])
-        if df.empty:
-            st.caption("No se han efectuado consultas a lo largo del mes.")
-        else:
-            fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
-            fig.update_traces(textposition='outside', textinfo='percent+label')
-            fig.update_layout(showlegend=False)
-            fig.update_layout(height=391)
-            st.plotly_chart(fig, use_container_width=True)
+# with col2_columna2:
+#     with st.container(border=True):
+#         col1, col2, col3 = st.columns([1, 1.5, 1])
+#         with col2:
+#             st.write("**Top 5 Temas de Consulta**")
+#         data = req.get("http://localhost:8000/Top5TemasConsulta").json()
+#         df = pd.DataFrame(data, columns=["Tema", "Cantidad de Consultas"])
+#         if df.empty:
+#             st.caption("No se han efectuado consultas a lo largo del mes.")
+#         else:
+#             fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
+#             fig.update_traces(textposition='outside', textinfo='percent+label')
+#             fig.update_layout(showlegend=False)
+#             fig.update_layout(height=391)
+#             st.plotly_chart(fig, use_container_width=True)
 
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")

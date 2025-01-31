@@ -361,16 +361,20 @@ def request_resolution(solicitud_resolucion: SolicitudResolucion):
     cursor.execute(query, (solicitud_resolucion.respuesta, solicitud_resolucion.id))
     conn.commit()
 
+class FechasRango(BaseModel):
+    start_date: str
+    end_date: str
+
 @app.get("/ObtenerCantConversaciones", status_code=status.HTTP_200_OK)
-def get_conversations_amount():
+def get_conversations_amount(fechas: FechasRango):
     query = """
         SELECT COUNT(*)
         FROM Session
         WHERE
-            start_session >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
-            AND start_session < DATE_FORMAT(DATE_ADD(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01')
+            start_session >= %s
+            AND start_session < DATE_ADD(%s, INTERVAL 1 DAY);
     """
-    cursor.execute(query)
+    cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchone()[0]
     return result
 
