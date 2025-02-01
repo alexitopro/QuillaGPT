@@ -104,15 +104,19 @@ col1, col2 = st.columns([1, 3])
 with col1:
     date_picker = st.date_input("**Selecciona el rango de fecha de análisis**", (primer_dia, "today"), format="DD/MM/YYYY")
 
-inicio, fin = date_picker
-print("Start Date:", inicio)
-print("End Date:", fin)
-input = {"start_date": inicio.isoformat(), "end_date": fin.isoformat()}
+if len(date_picker) == 2:
+    inicio, fin = date_picker
+    print("Start Date:", inicio)
+    print("End Date:", fin)
+    input = {"start_date": inicio.isoformat(), "end_date": fin.isoformat()}
 
-col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
-with col1:
-    sesiones_mes = req.get("http://localhost:8000/ObtenerCantConversaciones", data = json.dumps(input)).json()
-    st.metric(label = "**Conversaciones en el mes**", value = sesiones_mes, border=True)
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
+    with col1:
+        sesiones_mes = req.get("http://localhost:8000/ObtenerCantConversaciones", data = json.dumps(input)).json()
+        st.metric(label = "**Conversaciones**", value = sesiones_mes, border=True)
+else:
+    st.caption("Por favor, selecciona un rango de fecha apropiado para visualizar los indicadores.")
+
 # with col2:
 #     porcentaje_derivadas = req.get("http://localhost:8000/RatioConsultasDerivadas").json()
 #     if porcentaje_derivadas is None:
