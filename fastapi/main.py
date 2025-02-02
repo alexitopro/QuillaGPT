@@ -379,36 +379,42 @@ def get_conversations_amount(fechas: FechasRango):
     return result
 
 @app.get("/RatioConsultasDerivadas", status_code=status.HTTP_200_OK)
-def get_ratio_derived_queries():
+def get_ratio_derived_queries(fechas: FechasRango):
     query = """
         SELECT 
             ROUND((COUNT(CASE WHEN derived = 1 THEN 1 END) * 100.0 / COUNT(*)), 2) AS porcentaje_consultas_derivadas
         FROM 
             Message
+        JOIN Session ON Message.session_id = Session.session_id
         WHERE 
-        register_date >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01') 
-        AND register_date < DATE_FORMAT(CURRENT_DATE + INTERVAL 1 MONTH, '%Y-%m-01') AND active = 1 AND role = 'assistant';
+            Session.start_session >= %s
+            AND Session.start_session < DATE_ADD(%s, INTERVAL 1 DAY) AND role = 'assistant';
     """
-    cursor.execute(query)
+    cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchone()[0]
     return result
 
 @app.get("/PromedioEstudiantesActivos", status_code=status.HTTP_200_OK)
-def get_active_students_average():
+def get_active_students_average(fechas: FechasRango):
     query = """
         SELECT 
             AVG(d.conteo_usuario) AS prom_usuario_activos
         FROM (
             SELECT 
                 DATE(start_session) AS dia_interaccion,
-                COUNT(DISTINCT user_id) AS conteo_usuario
+                COUNT(DISTINCT Session.user_id) AS conteo_usuario
             FROM 
                 Session
+            JOIN User ON Session.user_id = User.user_id
+            WHERE 
+                Session.start_session >= %s
+                AND Session.start_session < DATE_ADD(%s, INTERVAL 1 DAY)
+                AND User.role_id = 2
             GROUP BY 
                 DATE(start_session)
         ) AS d;
     """
-    cursor.execute(query)
+    cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchone()[0]
     return result
 

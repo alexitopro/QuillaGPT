@@ -104,32 +104,35 @@ col1, col2 = st.columns([1, 3])
 with col1:
     date_picker = st.date_input("**Selecciona el rango de fecha de análisis**", (primer_dia, "today"), format="DD/MM/YYYY")
 
+inicio, fin = date_picker
+
 if len(date_picker) == 2:
-    inicio, fin = date_picker
-    print("Start Date:", inicio)
-    print("End Date:", fin)
     input = {"start_date": inicio.isoformat(), "end_date": fin.isoformat()}
 
     col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
+
     with col1:
         sesiones_mes = req.get("http://localhost:8000/ObtenerCantConversaciones", data = json.dumps(input)).json()
         st.metric(label = "**Conversaciones**", value = sesiones_mes, border=True)
+        
+    with col2:
+        porcentaje_derivadas = req.get("http://localhost:8000/RatioConsultasDerivadas", data = json.dumps(input)).json()
+        if porcentaje_derivadas is None:
+            porcentaje_derivadas = 0
+        st.metric(label = "**Ratio de solicitudes de soporte**", value = str(round(porcentaje_derivadas)) + '%', border=True)
+
+    with col3:
+        cant_admins = req.get("http://localhost:8000/PromedioEstudiantesActivos", data = json.dumps(input)).json()
+        if cant_admins is None:
+            cant_admins = 0
+        st.metric(label = "**Promedio de estudiantes activos**", value = int(cant_admins), border=True)
+
+    with col4:
+        cant_usuarios = req.get("http://localhost:8000/CantidadUsuarios").json()
+        st.metric(label = "**Estudiantes registrados**", value = cant_usuarios, border=True)
+
 else:
     st.caption("Por favor, selecciona un rango de fecha apropiado para visualizar los indicadores.")
-
-# with col2:
-#     porcentaje_derivadas = req.get("http://localhost:8000/RatioConsultasDerivadas").json()
-#     if porcentaje_derivadas is None:
-#         porcentaje_derivadas = 0
-#     st.metric(label = "**Ratio de consultas derivadas en el mes**", value = str(round(porcentaje_derivadas)) + '%', border=True)
-# with col3:
-#     cant_admins = req.get("http://localhost:8000/PromedioEstudiantesActivos").json()
-#     if cant_admins is None:
-#         cant_admins = 0
-#     st.metric(label = "**Promedio de estudiantes activos**", value = int(cant_admins), border=True)
-# with col4:
-#     cant_usuarios = req.get("http://localhost:8000/CantidadUsuarios").json()
-#     st.metric(label = "**Estudiantes registrados**", value = cant_usuarios, border=True)
 
 # col1_columna, col2_columna2 = st.columns([1.5, 1])
 # with col1_columna:
