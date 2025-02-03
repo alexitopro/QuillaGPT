@@ -100,13 +100,12 @@ container_inicio.title("Reporte de Indicadores", anchor=False)
 
 hoy = datetime.date.today()
 primer_dia = hoy.replace(day=1)
-col1, col2 = st.columns([1, 3])
+col1, col2 = st.columns([1, 5])
 with col1:
-    date_picker = st.date_input("**Selecciona el rango de fecha de análisis**", (primer_dia, "today"), format="DD/MM/YYYY")
-
-inicio, fin = date_picker
+    date_picker = st.date_input("**Rango de fecha de análisis**", (primer_dia, "today"), format="DD/MM/YYYY")
 
 if len(date_picker) == 2:
+    inicio, fin = date_picker
     input = {"start_date": inicio.isoformat(), "end_date": fin.isoformat()}
 
     col1, col2, col3, col4 = st.columns(4, vertical_alignment="center")
@@ -131,38 +130,35 @@ if len(date_picker) == 2:
         cant_usuarios = req.get("http://localhost:8000/CantidadUsuarios").json()
         st.metric(label = "**Estudiantes registrados**", value = cant_usuarios, border=True)
 
+    with st.container(border=True):
+        col1, col2, col3 = st.columns([1, 0.5, 1])
+        with col2:
+            st.write("**Cantidad de Consultas**")
+        st.write("")
+        data = req.get("http://localhost:8000/CantidadConsultasDiarias", data = json.dumps(input)).json()
+        df = pd.DataFrame(data, columns=["Día", "Cantidad de Consultas"])
+        if df.empty:
+            st.caption("No se han efectuado consultas en el rango de fechas seleccionadas.")
+        else:
+            st.bar_chart(data=df, x="Día", y="Cantidad de Consultas")
+
+    # with col2_columna2:
+    #     with st.container(border=True):
+    #         col1, col2, col3 = st.columns([1, 1.5, 1])
+    #         with col2:
+    #             st.write("**Top 5 Temas de Consulta**")
+    #         data = req.get("http://localhost:8000/Top5TemasConsulta").json()
+    #         df = pd.DataFrame(data, columns=["Tema", "Cantidad de Consultas"])
+    #         if df.empty:
+    #             st.caption("No se han efectuado consultas a lo largo del mes.")
+    #         else:
+    #             fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
+    #             fig.update_traces(textposition='outside', textinfo='percent+label')
+    #             fig.update_layout(showlegend=False)
+    #             fig.update_layout(height=391)
+    #             st.plotly_chart(fig, use_container_width=True)
 else:
     st.caption("Por favor, selecciona un rango de fecha apropiado para visualizar los indicadores.")
-
-# col1_columna, col2_columna2 = st.columns([1.5, 1])
-# with col1_columna:
-#     with st.container(border=True):
-#         col1, col2, col3 = st.columns([1, 1, 1])
-#         with col2:
-#             st.write("**Cantidad de Consultas por Mes**")
-#         st.write("")
-#         data = req.get("http://localhost:8000/CantidadConsultasMes").json()
-#         df = pd.DataFrame(data, columns=["Mes", "Cantidad de Consultas"])
-#         if df.empty:
-#             st.caption("No se han efectuado consultas a lo largo del mes.")
-#         else:
-#             st.bar_chart(data = df, x = "Mes", y = "Cantidad de Consultas", height=370)
-
-# with col2_columna2:
-#     with st.container(border=True):
-#         col1, col2, col3 = st.columns([1, 1.5, 1])
-#         with col2:
-#             st.write("**Top 5 Temas de Consulta**")
-#         data = req.get("http://localhost:8000/Top5TemasConsulta").json()
-#         df = pd.DataFrame(data, columns=["Tema", "Cantidad de Consultas"])
-#         if df.empty:
-#             st.caption("No se han efectuado consultas a lo largo del mes.")
-#         else:
-#             fig = px.pie(df, values='Cantidad de Consultas', names='Tema')
-#             fig.update_traces(textposition='outside', textinfo='percent+label')
-#             fig.update_layout(showlegend=False)
-#             fig.update_layout(height=391)
-#             st.plotly_chart(fig, use_container_width=True)
 
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")

@@ -430,19 +430,35 @@ def get_users_amount():
     result = cursor.fetchone()[0]
     return result
 
-@app.get("/CantidadConsultasMes", status_code=status.HTTP_200_OK)
-def get_queries_amount():
+@app.get("/CantidadConsultasDiarias", status_code=status.HTTP_200_OK)
+def get_queries_amount(fechas: FechasRango):
+    # query = """
+    #     SELECT 
+    #         DATE_FORMAT(register_date, '%%d/%%m/%%Y') AS dia,
+    #         COUNT(*) AS conteo_mensajes
+    #     FROM Message
+    #     JOIN Session ON Message.session_id = Session.session_id
+    #     WHERE 
+    #         role = 'user'
+    #         AND Session.start_session >= %s
+    #         AND Session.start_session < DATE_ADD(%s, INTERVAL 1 DAY)
+    #     GROUP BY register_date
+    #     ORDER BY register_date;
+    # """
     query = """
         SELECT 
-            DATE_FORMAT(register_date, '%Y-%m') AS mes,
+            register_date as dia,
             COUNT(*) AS conteo_mensajes
         FROM Message
-        WHERE active = 1 
-            AND role = 'user'
-        GROUP BY DATE_FORMAT(register_date, '%Y-%m')
-        ORDER BY mes;
+        JOIN Session ON Message.session_id = Session.session_id
+        WHERE 
+            role = 'user'
+            AND Session.start_session >= %s
+            AND Session.start_session < DATE_ADD(%s, INTERVAL 1 DAY)
+        GROUP BY register_date
+        ORDER BY register_date;
     """
-    cursor.execute(query)
+    cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchall()
     return result
 
