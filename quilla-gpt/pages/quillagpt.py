@@ -49,10 +49,22 @@ icons = {
     "Panel de Administrador": ":material/switch_account:",
 }
 
-st.set_page_config(
-    layout = "wide",
-    page_title = "QuillaGPT"
-)
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "prompt_ingresado" not in st.session_state:
+    st.session_state.prompt_ingresado = None
+
+if st.session_state.messages == [] and st.session_state.prompt_ingresado == None:
+    st.set_page_config(
+        layout = "centered",
+        page_title = "QuillaGPT",
+    )
+else:
+    st.set_page_config(
+        layout = "wide",
+        page_title = "QuillaGPT",
+    )
 
 if "page_session" not in st.session_state:
     st.session_state.page_session = " "
@@ -163,11 +175,11 @@ elif page == "Cerrar sesión":
     st.session_state.page_session = " "
     st.switch_page('main.py')
 elif page == "Panel de Administrador":
+    st.session_state.messages = []
+    st.session_state.feedback_response = False
     st.switch_page('./pages/dashboard_users.py')
 
 #inicializar historial de mensajes
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
 if "current_session_id" not in st.session_state:
     st.session_state.current_session_id = None
@@ -181,19 +193,41 @@ if "feedback_response" not in st.session_state:
 if "message_response_id" not in st.session_state:
     st.session_state.message_response_id = None
 
-#container de inicio
-container_inicio = st.container()
-with container_inicio:
-    st.write("")
-    st.write("")
-    st.write("")
-    st.write("")
-    st.write("")
-    st.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
-    st.write(
-        "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
-    )
-    st.write("")
+if st.session_state.messages == [] and st.session_state.prompt_ingresado == None:
+    col1, col2, col3 = st.columns([1, 5, 1])
+    with col2:
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.markdown("<img src='app/static/squirrel.png' width='150' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
+        st.write("")
+        st.write("")
+        st.header("¿En qué te puedo ayudar?", anchor = False)
+        st.write("")
+        st.write("")
+else:
+    #container de inicio
+    container_inicio = st.container()
+    with container_inicio:
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
+        st.write(
+            "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
+        )
+        st.write("")
 
 #sidebar
 if "username" not in st.session_state:
@@ -258,151 +292,160 @@ for message in st.session_state.messages:
         </div>"""
         st.markdown(div, unsafe_allow_html=True)
 
-#entrada de texto del usuario
-if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP"):
-    st.empty()
-    #mostrar la respuesta del usuario
-    div = f"""
-    <div class = "chat-row row-reverse">
-        <img src = "app/static/profile-account.png" width=40 height=40>
-        <div class = "user-message">{prompt}</div>
-    </div>"""
-    st.markdown(div, unsafe_allow_html=True)
-    #agregar respuesta del asistente
-    with st.chat_message("assistant", avatar = "./static/squirrel.png"):
-        lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
-        with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
-            if st.session_state.messages == []:
-                #generamos el titulo de la session
-                response = cliente.chat.completions.create(
-                    model="meta/llama-3.3-70b-instruct",
-                    messages=[
-                        {"role": "system", "content": "Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes. Responde únicamente con el nombre del título correspondiente, nada más. Recuerda que es hasta máximo 5 palabras el título."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    temperature=0.2,
-                    top_p=0.7,
-                    max_tokens=8192,
-                    stream=False
+if st.session_state.messages == [] and st.session_state.prompt_ingresado == None:
+    with st.container():
+        if prompt := st.chat_input(placeholder = "Ingresa tu consulta a QuillaGPT"):
+            st.session_state.prompt_ingresado = prompt
+            st.rerun()
+else:
+    if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP") or st.session_state.prompt_ingresado:
+        if st.session_state.prompt_ingresado is not None:
+            prompt = st.session_state.prompt_ingresado
+        st.empty()
+        #mostrar la respuesta del usuario
+        div = f"""
+        <div class = "chat-row row-reverse">
+            <img src = "app/static/profile-account.png" width=40 height=40>
+            <div class = "user-message">{prompt}</div>
+        </div>"""
+        st.markdown(div, unsafe_allow_html=True)
+        #agregar respuesta del asistente
+        with st.chat_message("assistant", avatar = "./static/squirrel.png"):
+            lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
+            with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
+                if st.session_state.messages == []:
+                    #generamos el titulo de la session
+                    response = cliente.chat.completions.create(
+                        model="meta/llama-3.3-70b-instruct",
+                        messages=[
+                            {"role": "system", "content": "Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes. Responde únicamente con el nombre del título correspondiente, nada más. Recuerda que es hasta máximo 5 palabras el título."},
+                            {"role": "user", "content": prompt},
+                        ],
+                        temperature=0.2,
+                        top_p=0.7,
+                        max_tokens=8192,
+                        stream=False
+                    )
+                    titulo = response.choices[0].message.content
+                    titulo = titulo.replace('"', "")
+                    result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user["email"]}")
+                    user_id = result.json()[0]
+                    #insertar la nueva session en la base de datos
+                    input = {"user_id" : user_id, "titulo" : titulo}
+                    result = req.post(url="http://127.0.0.1:8000/Session", data = json.dumps(input))
+                    #obtener el id de la session
+                    session_id = result.json()
+                    st.session_state.current_session_id = session_id
+                    #activamos la nueva session
+                    st.session_state.session_new = True
+                
+                #insertar el mensaje del usuario en la base de datos
+                input = {"session_id" : st.session_state.current_session_id, "role" : "user", "content" : prompt, "classification" : "-1"}
+                result = req.post(url="http://127.0.0.1:8000/Message", data = json.dumps(input))
+
+                #preparar el historial de conversacion
+                conversacion = []
+                for message in st.session_state.messages:
+                    conversacion.append({"role": message["role"], "content": message["content"]})
+
+                #buscar en pinecone los resultados del prompt
+                query_embedding = model.encode([prompt])[0].tolist()
+                results = index.query(
+                    namespace = "quillagpt-namespace",
+                    vector = query_embedding,
+                    top_k = 3,
+                    include_values = False,
+                    include_metadata = True
                 )
-                titulo = response.choices[0].message.content
-                titulo = titulo.replace('"', "")
-                result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user["email"]}")
-                user_id = result.json()[0]
-                #insertar la nueva session en la base de datos
-                input = {"user_id" : user_id, "titulo" : titulo}
-                result = req.post(url="http://127.0.0.1:8000/Session", data = json.dumps(input))
-                #obtener el id de la session
-                session_id = result.json()
-                st.session_state.current_session_id = session_id
-                #activamos la nueva session
-                st.session_state.session_new = True
-            
-            #insertar el mensaje del usuario en la base de datos
-            input = {"session_id" : st.session_state.current_session_id, "role" : "user", "content" : prompt, "classification" : "-1"}
-            result = req.post(url="http://127.0.0.1:8000/Message", data = json.dumps(input))
+                retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
+                contexto = "\n".join(retrieved_documents)
 
-            #preparar el historial de conversacion
-            conversacion = []
-            for message in st.session_state.messages:
-                conversacion.append({"role": message["role"], "content": message["content"]})
+                #generamos la respuesta natural
+                stream =  cliente.chat.completions.create(
+                    model = "meta/llama-3.3-70b-instruct",
+                    messages=[
+                        sistema,
+                        *conversacion,
+                        {"role": "user", "content": prompt},
+                        {"role": "assistant", "content": contexto}
+                    ],
+                    temperature = 0.2,
+                    top_p = 0.7,
+                    max_tokens = 8192,
+                    stream = True
+                )
 
-            #buscar en pinecone los resultados del prompt
-            query_embedding = model.encode([prompt])[0].tolist()
-            results = index.query(
-                namespace = "quillagpt-namespace",
-                vector = query_embedding,
-                top_k = 3,
-                include_values = False,
-                include_metadata = True
-            )
-            retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
-            contexto = "\n".join(retrieved_documents)
+                #generamos respuesta como string
+                respuesta =  cliente.chat.completions.create(
+                    model = "meta/llama-3.3-70b-instruct",
+                    messages=[
+                        sistema,
+                        *conversacion,
+                        {"role": "user", "content": prompt},
+                        {"role": "assistant", "content": contexto}
+                    ],
+                    temperature = 0.2,
+                    top_p = 0.7,
+                    max_tokens = 8192,
+                    stream = False
+                )
 
-            #generamos la respuesta natural
-            stream =  cliente.chat.completions.create(
-                model = "meta/llama-3.3-70b-instruct",
-                messages=[
-                    sistema,
-                    *conversacion,
-                    {"role": "user", "content": prompt},
-                    {"role": "assistant", "content": contexto}
-                ],
-                temperature = 0.2,
-                top_p = 0.7,
-                max_tokens = 8192,
-                stream = True
-            )
+            response = st.write_stream(stream)
+            st.session_state.feedback_response = True
 
-            #generamos respuesta como string
-            respuesta =  cliente.chat.completions.create(
-                model = "meta/llama-3.3-70b-instruct",
-                messages=[
-                    sistema,
-                    *conversacion,
-                    {"role": "user", "content": prompt},
-                    {"role": "assistant", "content": contexto}
-                ],
-                temperature = 0.2,
-                top_p = 0.7,
-                max_tokens = 8192,
-                stream = False
-            )
+        #identificamos el tema del mensaje
+        tema_response = cliente.chat.completions.create(
+            model="meta/llama-3.3-70b-instruct",
+            messages=[
+                {"role": "system", "content": """
+                Cual es el titulo que mejor describe la consulta? Obligatoriamente debe ser uno de los siguientes:
+    1. Cambio de especialidad
+    2. Certificado de notas
+    3. Convalidación de cursos
+    4. Duplicado de carné universitario
+    5. Matrícula
+    6. Obtención del título profesional
+    7. Pago para trámites académicos no presenciales
+    8. Reconocimiento de cursos
+    9. Registro histórico de notas
+    10. Reincorporación
+    11. Retiro de cursos
+    12. Solicitud de constancias a la OCR
+    13. Transferencia interna
+    14. Verificación de grados y/o títulos
+    15. Otros
+                Solo responde con el titulo correspondiente sin la numeración, nada más.
+                """},
+                {"role": "user", "content": "La consulta es" + prompt},
+            ],
+            temperature=0.2,
+            top_p=0.7,
+            max_tokens=8192,
+            stream=False
+        )
+        tema = tema_response.choices[0].message.content
+        tema = tema.replace('"', "")
 
-        response = st.write_stream(stream)
-        st.session_state.feedback_response = True
+        #insertar el mensaje del usuario en la base de datos
+        input = {"session_id" : st.session_state.current_session_id, "role" : "assistant", "content" : response, "classification" : tema}
+        result = req.post(url="http://127.0.0.1:8000/Message", data = json.dumps(input))
+        added_message_id = result.json()
+        st.session_state.message_response_id = added_message_id
 
-    #identificamos el tema del mensaje
-    tema_response = cliente.chat.completions.create(
-        model="meta/llama-3.3-70b-instruct",
-        messages=[
-            {"role": "system", "content": """
-            Cual es el titulo que mejor describe la consulta? Obligatoriamente debe ser uno de los siguientes:
-1. Cambio de especialidad
-2. Certificado de notas
-3. Convalidación de cursos
-4. Duplicado de carné universitario
-5. Matrícula
-6. Obtención del título profesional
-7. Pago para trámites académicos no presenciales
-8. Reconocimiento de cursos
-9. Registro histórico de notas
-10. Reincorporación
-11. Retiro de cursos
-12. Solicitud de constancias a la OCR
-13. Transferencia interna
-14. Verificación de grados y/o títulos
-15. Otros
-            Solo responde con el titulo correspondiente sin la numeración, nada más.
-            """},
-            {"role": "user", "content": "La consulta es" + prompt},
-        ],
-        temperature=0.2,
-        top_p=0.7,
-        max_tokens=8192,
-        stream=False
-    )
-    tema = tema_response.choices[0].message.content
-    tema = tema.replace('"', "")
+        #insertar el tema en la base de datos o actualizar el timestamp si es que ya existe
+        input = {"session_id" : st.session_state.current_session_id, "tema" : tema}
+        result = req.post(url="http://127.0.0.1:8000/SessionClassification", data = json.dumps(input))
 
-    #insertar el mensaje del usuario en la base de datos
-    input = {"session_id" : st.session_state.current_session_id, "role" : "assistant", "content" : response, "classification" : tema}
-    result = req.post(url="http://127.0.0.1:8000/Message", data = json.dumps(input))
-    added_message_id = result.json()
-    st.session_state.message_response_id = added_message_id
+        #actualizar el historial de mensajes
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.messages.append({"role": "assistant", "content": response})
 
-    #insertar el tema en la base de datos o actualizar el timestamp si es que ya existe
-    input = {"session_id" : st.session_state.current_session_id, "tema" : tema}
-    result = req.post(url="http://127.0.0.1:8000/SessionClassification", data = json.dumps(input))
+        st.session_state.prompt_ingresado = None
 
-    #actualizar el historial de mensajes
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.session_state.messages.append({"role": "assistant", "content": response})
-
-    #reiniciamos el sidebar para actualizar con la nueva conversacion
-    if st.session_state.session_new:
-        st.session_state.session_new = False
-        st.rerun()
+        #reiniciamos el sidebar para actualizar con la nueva conversacion
+        if st.session_state.session_new:
+            st.session_state.session_new = False
+            st.rerun()
 
 def send_feedback(derivar, message_id):
     input = {"derivar" : derivar, "message_id" : message_id, "email" : st.session_state.user["email"]}
