@@ -11,6 +11,8 @@ import json
 from streamlit_lottie import st_lottie_spinner
 from uuid import uuid4
 import time
+from PIL import Image
+from io import BytesIO
 
 #inicializar las variables de entorno
 load_dotenv()
@@ -149,10 +151,14 @@ if st.session_state.conversation_delete:
 @st.dialog("Configuración")
 def config_user():
     tab1, tab2 = st.tabs(["Mi cuenta", "Conversaciones"])
+    st.session_state.page_session = " "
     with tab1:
         col1, col2, col3 = st.columns([1, 0.75, 1])
         with col2:
-            st.image(st.session_state.user["picture"], width=100)
+            image_url = st.session_state.user["picture"]
+            response = req.get(image_url)
+            image = Image.open(BytesIO(response.content))
+            st.image(image, width=100)
         st.text_input("**Nombre de usuario**", value=st.session_state["username"], disabled=True)
         st.text_input("**Correo electrónico**", value=st.session_state.user["email"], disabled=True)
         st.text_input("**Rol**", value="Administrador" if st.session_state.role_id == 1 else "Estudiante", disabled=True)
@@ -165,7 +171,7 @@ def config_user():
 
 if page == "Configuración":
     config_user()
-    st.session_state.page_session = "Configuración"
+    # st.session_state.page_session = "Configuración"
 elif page == "Cerrar sesión":
     st.session_state["username"] = ""
     st.session_state.messages = []
@@ -177,6 +183,7 @@ elif page == "Cerrar sesión":
 elif page == "Panel de Administrador":
     st.session_state.messages = []
     st.session_state.feedback_response = False
+    st.session_state.page_session = " "
     st.switch_page('./pages/dashboard_users.py')
 
 #inicializar historial de mensajes
@@ -270,6 +277,7 @@ with st.sidebar:
     else:
         for session in sessions:
             if st.button(session[0], use_container_width = True, type="secondary", key=session[1]):
+                st.session_state.feedback_response = False
                 result = req.get(f"http://127.0.0.1:8000/Message/ObtenerMensajesSesion/{session[1]}")
                 st.session_state.page_session = " "
                 messages = result.json()

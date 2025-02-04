@@ -3,6 +3,8 @@ from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
 import pandas as pd
+from PIL import Image
+from io import BytesIO
 
 #BARRA DE NAVEGACION
 styles = {
@@ -93,15 +95,19 @@ page = st_navbar(
 @st.dialog("Mi cuenta")
 def config_user():
     col1, col2, col3 = st.columns([1, 0.75, 1])
+    st.session_state.page_session = " "
     with col2:
-        st.image(st.session_state.user["picture"], width=100)
+        image_url = st.session_state.user["picture"]
+        response = req.get(image_url)
+        image = Image.open(BytesIO(response.content))
+        st.image(image, width=100)
     st.text_input("**Nombre de usuario**", value=st.session_state["username"], disabled=True)
     st.text_input("**Correo electrónico**", value=st.session_state.user["email"], disabled=True)
     st.text_input("**Rol**", value="Administrador" if st.session_state.role_id == 1 else "Estudiante", disabled=True)
 
 if page == "Mi cuenta":
     config_user()
-    st.session_state.page_session = "Mi cuenta"
+    # st.session_state.page_session = "Mi cuenta"
 elif page == "Cerrar sesión":
     st.session_state.page_session = " "
     st.session_state["username"] = ""
