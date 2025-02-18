@@ -46,13 +46,6 @@ def delete_conversations(username: str):
     conn.commit()
     return username
 
-@app.get("/CustomInstruction/", status_code = status.HTTP_200_OK)
-def get_custom_instruction():
-    select_query = "SELECT instruction FROM CustomInstruction WHERE active = 1"
-    cursor.execute(select_query)
-    result = cursor.fetchone()[0]
-    return result
-
 @app.get("/Session/ObtenerSesionesUsuario/{user_email}", status_code=status.HTTP_200_OK)
 def get_sesiones_usuario(user_email: str):
     select_query = """
@@ -283,13 +276,17 @@ def get_file():
 def get_custom_instruction():
     select_query = "SELECT instruction FROM CustomInstruction WHERE active = 1"
     cursor.execute(select_query)
-    result = cursor.fetchone()
+    result = cursor.fetchone()[0]
     return result
 
 @app.get("/ListarInstruccionesInactivas", status_code=status.HTTP_200_OK)
 def list_custom_instruction():
     select_query = """
-        SELECT instruction, "Inactivo" FROM CustomInstruction WHERE active = 0 ORDER BY custom_instruction_id DESC
+        SELECT instruction, register_date, User.email
+        FROM CustomInstruction
+        INNER JOIN User ON CustomInstruction.user_id = User.user_id
+        WHERE CustomInstruction.active = 0 
+        ORDER BY custom_instruction_id DESC
     """
     cursor.execute(select_query)
     result = cursor.fetchall()
@@ -297,6 +294,7 @@ def list_custom_instruction():
 
 class InsertarInstruccion(BaseModel):
     instruccion: str
+    correo: str
 
 @app.post("/CustomInstruction", status_code=status.HTTP_201_CREATED)
 def create_custom_instruction(instruction: InsertarInstruccion):
@@ -309,10 +307,15 @@ def create_custom_instruction(instruction: InsertarInstruccion):
     conn.commit()
 
     query = """
-        INSERT INTO CustomInstruction (instruction, active)
-        VALUES (%s, 1)
+        SELECT user_id FROM User WHERE email = %s
     """
-    cursor.execute(query, (instruction.instruccion,))
+    cursor.execute(query, (instruction.correo,))
+    user_id = cursor.fetchone()
+    query = """
+        INSERT INTO CustomInstruction (instruction, register_date, user_id, active)
+        VALUES (%s, CURDATE(), %s, 1)
+    """
+    cursor.execute(query, (instruction.instruccion, user_id[0]))
     conn.commit()
 
 @app.get("/ObtenerClasificaciones", status_code=status.HTTP_200_OK)

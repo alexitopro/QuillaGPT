@@ -11,12 +11,12 @@ with col2:
     st.title("¡Bienvenido, "+ st.session_state["username"] + "!", anchor=False)    
     col21, col22, col23 = st.columns([1, 3, 1])
     with col22:
-        st.image("./static/squirrel.png", use_container_width=True)
+        st.image("./static/panda.png", use_container_width=True)
 
 welcome_text = """
-Mi nombre es QuillaGPT, asistente virtual de la Facultad de Ciencias e Ingeniería de la PUCP. 
-Estoy aquí para ayudarte con todas tus dudas sobre trámites académico-administrativos, como reclamo de notas, retiro de cursos y más. 
-Puedes contar conmigo las **24 horas del día** para resolver tus preguntas de manera rápida y sencilla.
+¡Hola! Soy PandaGPT, tu asistente virtual de la Facultad de Ciencias e Ingeniería de la PUCP.
+Estoy aquí para ayudarte con tus dudas sobre trámites académico-administrativos, como reclamos de notas, retiros de cursos y más.
+¡Disponible las 24 horas para responderte rápido y fácil!
 """
 
 if "stream_complete" not in st.session_state:

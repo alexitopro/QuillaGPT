@@ -24,7 +24,7 @@ cliente = OpenAI(
 #BARRA DE NAVEGACION
 styles = {
     "nav": {
-        "background-color": "#31333F",
+        "background-color": "#00205B",
         "justify-content": "space-between"
     },
     "div": {
@@ -60,12 +60,12 @@ if "prompt_ingresado" not in st.session_state:
 if st.session_state.messages == [] and st.session_state.prompt_ingresado == None:
     st.set_page_config(
         layout = "centered",
-        page_title = "QuillaGPT",
+        page_title = "PandaGPT",
     )
 else:
     st.set_page_config(
         layout = "wide",
-        page_title = "QuillaGPT",
+        page_title = "PandaGPT",
     )
 
 if "page_session" not in st.session_state:
@@ -92,7 +92,7 @@ else:
     )
 
 # incicializar pinecone
-@st.cache_resource(show_spinner="Inicializando QuillaGPT...")
+@st.cache_resource(show_spinner="Inicializando PandaGPT...")
 def inicializar_pinecone():
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
     index_name = "quillagpt-index"
@@ -101,7 +101,7 @@ def inicializar_pinecone():
 index = inicializar_pinecone()
 
 #cargar el modelo de embedding
-@st.cache_data(show_spinner="Inicializando QuillaGPT...")
+@st.cache_data(show_spinner="Inicializando PandaGPT...")
 def cargar_modelo():
     return SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
 model = cargar_modelo()
@@ -215,10 +215,18 @@ if st.session_state.messages == [] and st.session_state.prompt_ingresado == None
         st.write("")
         st.write("")
         st.write("")
-        st.markdown("<img src='app/static/squirrel.png' width='150' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
+        st.markdown("<img src='app/static/panda.png' width='150' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
         st.write("")
         st.write("")
-        st.header("¿En qué te puedo ayudar?", anchor = False)
+        st.markdown(
+            """
+            <div style="color:#00205B; font-size:36px; font-weight:600;">
+                ¿En qué te puedo ayudar?
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        # st.header("¿En qué te puedo ayudar?", anchor = False)
         st.write("")
         st.write("")
 else:
@@ -230,21 +238,39 @@ else:
         st.write("")
         st.write("")
         st.write("")
-        st.title("¡Hola, soy QuillaBot! ¿En qué te puedo ayudar?")
+        # st.title("¡Hola, soy PandaGPT! ¿En qué te puedo ayudar?")
+        st.markdown(
+            """
+            <h1 style="color:#00205B;">¡Hola, soy PandaGPT! ¿En qué te puedo ayudar?</h1>
+            """,
+            unsafe_allow_html=True
+        )
         st.write(
             "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
         )
+
         st.write("")
 
 #sidebar
 if "username" not in st.session_state:
     st.session_state.username = False
 with st.sidebar:
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    # st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    st.markdown(
+        f"""
+        <h1 style="color:#00205B;">Bienvenido, {st.session_state["username"]}!</h1>
+        """,
+        unsafe_allow_html=True
+    )
 
     col1, col2 = st.columns([5, 1], vertical_alignment="center")
     with col1:
-        st.header("Mis conversaciones")
+        st.markdown(
+            """
+            <h2 style="color:#00205B;">Mis conversaciones</h2>
+            """,
+            unsafe_allow_html=True
+        )
     with col2:
         #cargar el icono de agregar nueva conversacion
         with stylable_container(
@@ -257,6 +283,7 @@ with st.sidebar:
                     cursor: pointer;
                     font-family: 'Material Icons';
                     font-size: 35px;
+                    color: #00CFB4;
                 }
                 .element-container:has(#button-after) + div button::before {
                     content: 'add_circle';
@@ -289,7 +316,7 @@ with st.sidebar:
 #contenedor para los mensajes de chat
 for message in st.session_state.messages:
     if message["role"] == "assistant":
-        with st.chat_message(message["role"], avatar = "./static/squirrel.png"):
+        with st.chat_message(message["role"], avatar = "./static/panda_green.png"):
             st.empty()
             st.markdown(message["content"])
     else:
@@ -302,9 +329,12 @@ for message in st.session_state.messages:
 
 if st.session_state.messages == [] and st.session_state.prompt_ingresado == None:
     with st.container():
-        if prompt := st.chat_input(placeholder = "Ingresa tu consulta a QuillaGPT"):
+        if prompt := st.chat_input(placeholder = "Ingresa tu consulta a PandaGPT"):
             st.session_state.prompt_ingresado = prompt
             st.rerun()
+        col1, col2, col3 = st.columns([1, 5, 1])
+        with col2:
+            st.caption("Puedes consultar sobre trámites como reincorporación, retiro de cursos, convalidación de cursos, reclamo de notas y mucho más. ¡Pregunta lo que necesites que estaré aquí para apoyarte!")
 else:
     if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP") or st.session_state.prompt_ingresado:
         if st.session_state.prompt_ingresado is not None:
@@ -318,7 +348,7 @@ else:
         </div>"""
         st.markdown(div, unsafe_allow_html=True)
         #agregar respuesta del asistente
-        with st.chat_message("assistant", avatar = "./static/squirrel.png"):
+        with st.chat_message("assistant", avatar = "./static/panda_green.png"):
             lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
             with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
                 if st.session_state.messages == []:

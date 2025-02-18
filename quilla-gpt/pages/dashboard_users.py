@@ -9,7 +9,7 @@ from io import BytesIO
 #BARRA DE NAVEGACION
 styles = {
     "nav": {
-        "background-color": "#31333F",
+        "background-color": "#00205B",
         "justify-content": "space-between"
     },
     "div": {
@@ -39,7 +39,7 @@ icons = {
 
 st.set_page_config(
     layout = "wide",
-    page_title = "QuillaGPT"
+    page_title = "PandaGPT"
 )
 
 if "page_session" not in st.session_state:
@@ -134,7 +134,7 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
-container_inicio.title("Gestión de Usuarios")
+container_inicio.title("Gestión de Usuarios", anchor=False)
 
 #contenido
 col1, col2, col3 = st.columns([2.5, 1.5, 1], vertical_alignment="bottom")
@@ -165,7 +165,13 @@ if event.selection is not None:
         verDetalle(selected_index)
 
 with st.sidebar:
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    # st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    st.markdown(
+        f"""
+        <h1 style="color:#00205B;">Bienvenido, {st.session_state["username"]}!</h1>
+        """,
+        unsafe_allow_html=True
+    )
     
     st.write("")
 

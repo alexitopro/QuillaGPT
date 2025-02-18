@@ -16,7 +16,7 @@ from io import BytesIO
 #BARRA DE NAVEGACION
 styles = {
     "nav": {
-        "background-color": "#31333F",
+        "background-color": "#00205B",
         "justify-content": "space-between"
     },
     "div": {
@@ -46,7 +46,7 @@ icons = {
 
 st.set_page_config(
     layout = "wide",
-    page_title = "QuillaGPT"
+    page_title = "PandaGPT"
 )
 
 if "page_session" not in st.session_state:
@@ -109,27 +109,45 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
-container_inicio.title("Gestión de Conocimiento")
+container_inicio.title("Gestión del Conocimiento", anchor=False)
+# container_inicio.markdown(
+#     """
+#     <h1 style="color:#00205B;">Gestión del Conocimiento</h1>
+#     """,
+#     unsafe_allow_html=True
+# )
 
-tab1, tab2, tab3 = st.tabs(["Conocimiento inicial", "Conocimiento dinámico", "Instrucciones personalizadas"])
+
+tab1, tab2, tab3 = st.tabs(["Conocimiento base", "Conocimiento dinámico", "Instrucciones personalizadas"])
+
+def cargar_css(file_path):
+    with open(file_path, "r") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+cargar_css("style.css")
 
 #conocimiento inicial
 with tab1:
-    st.write("QuillaGPT tiene en cuenta la información de los procesos académicos y administrativos disponibles públicamente en las siguientes páginas web:")
+
+    st.subheader("Sitios web de referencias", help="PandaGPT tiene en cuenta la información de los procesos académicos y administrativos disponibles de manera pública en las páginas web listadas", anchor=False)
+
     st.markdown("""
-    - https://sites.google.com/pucp.edu.pe/fci-pucp/estudiantes
-    - https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa
-    - https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/
-    """)
-    st.subheader("¿Deseas actualizar la información disponible?", anchor=False)
+        - <a style='display: block;' href="https://estudiante.pucp.edu.pe/tramites-y-certificaciones/tramites-academicos/?dirigido_a%5B%5D=Estudiantes&unidad%5B%5D=Facultad+de+Ciencias+e+Ingenier%C3%ADa">Trámites académicos dirigidos a estudiantes de la PUCP</a>
+        - <a style='display: block;' href="https://facultad-ciencias-ingenieria.pucp.edu.pe/estudiantes/tramites-academicos-y-administrativos/">Trámites académicos dirigidos a estudiantes de la Facultad de Ciencias e Ingeniería</a>
+        - <a style='display: block;' href="https://sites.google.com/pucp.edu.pe/fci-pucp/estudiantes">Google Sites de la Facultad de Ciencias e Ingeniería</a>
+    """, unsafe_allow_html=True)
+
+    st.subheader("Proceso de actualización de información", anchor=False)
+
     st.write("""
-El proceso de actualización incluye los siguientes pasos:
+La actualización del conocimiento garantiza que la información esté al día si los sitios web listados han cambiado.
+             
+El proceso incluye los siguientes pasos:
 
-1. Revisión automática de las páginas previamente mencionadas.
-2. Identificación y extracción de los trámites y procesos administrativos según la página correspondiente.
-3. Almacenamiento de datos en la base de datos para que QuillaGPT pueda utilizarlos en respuestas a consultas de los estudiantes.
+1. Revisión automatizada de las páginas indicadas.
+2. Extracción de los trámites y procesos administrativos.
+3. Guardado de los datos para que PandaGPT los utilice en sus respuestas.
 
-Haz clic en el botón de abajo para asegurarte de tener los datos más recientes. Recuerda que este proceso puede tardar algunos minutos en completarse.""")
+Recuerda que este proceso puede tardar algunos minutos en completarse.""")
 
     if 'run_button' in st.session_state and st.session_state.run_button == True:
         st.session_state.running = True
@@ -147,14 +165,18 @@ Haz clic en el botón de abajo para asegurarte de tener los datos más recientes
 
 #conocimiento dinamico
 with tab2:
-    st.write("QuillaGPT puede utilizar otros documentos que consideres pertinentes como conocimiento adicional. Para ello, debes tomar en cuenta las siguientes consideraciones:")
 
-    st.markdown("""
-    - **Formato de archivo:** Sólo se aceptan archivos en formato PDF.
-    - **Procesamiento de contenido:** QuillaGPT solo puede leer y procesar contenido textual. Si el documento incluye imágenes, gráficos u otros elementos visuales, estos no podrán ser interpretados, ya que el sistema solo extrae texto.
-    - **Actualización de documentos:** Si subes un documento cuyo nombre del archivo ya está registrado en la base de datos, por favor elimina el documento de mayor antigüedad. Caso contrario, QuillaGPT considerará ambos documentos en sus respuestas.
-    - **Eliminación de documentos:** Si identificas uno o más documentos que ya no tienen vigencia para el ciclo académico actual, puedes seleccionarlos y eliminarlos de la base de datos.
-    """)
+    st.subheader("Documentos digitales", anchor=False)
+
+    with st.container(border=True):
+        st.write("PandaGPT también puede usar documentos adicionales como conocimiento. Sin embargo, ten en cuenta las siguientes consideraciones:")
+
+        st.markdown("""
+        - **Formato de archivos:** Sólo se aceptan archivos en formato PDF estructurado.
+        - **Contenido:** PandaGPT solo es capaz de procesar texto; no tiene la capacidad de interpretar imágenes o gráficos.
+        - **Actualización de documentos:** Si deseas subir un archivo con el mismo nombre que uno ya existente, asegúrate de eliminar el más antiguo para evitar inconsistencias en las respuestas de PandaGPT.
+        - **Eliminación de documentos:** No olvides de borrar aquellos documentos que ya no sean relevantes para el período actual.
+        """)
 
     st.write("")
 
@@ -232,6 +254,9 @@ with tab2:
     ]
 
 with tab3:
+
+    st.subheader("Instrucciones personalizadas", anchor=False)
+
     if "disabled" not in st.session_state:
         st.session_state["disabled"] = True
     if "text" not in st.session_state:
@@ -251,15 +276,16 @@ with tab3:
 
     def save_instructions(instrucciones):
         if not st.session_state["disabled"]:
-            input = {"instruccion" : instrucciones}
+            input = {"instruccion" : instrucciones, "correo" : st.session_state.user["email"]}
+            print(input)
             req.post(url = "http://127.0.0.1:8000/CustomInstruction", data = json.dumps(input))
             st.toast("Las instrucciones personalizadas se han guardado exitosamente", icon=":material/check:")
             st.session_state.text = instrucciones
         disable_instructions()
 
-    st.write("Las instrucciones personalizadas permiten compartir lo que quieras que QuillaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las  conversaciones nuevas que los estudiantes de la PUCP tengan con ella.")
+    st.write("Las instrucciones personalizadas permiten compartir lo que quieras que PandaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las conversaciones nuevas que los estudiantes de la PUCP tengan con él.")
 
-    instrucciones = st.text_area("**Instrucciones personalizadas**", height=500, max_chars=None, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
+    instrucciones = st.text_area("**Instrucciones personalizadas**", height=450, max_chars=None, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
 
     col1, col2, col3 = st.columns([8, 2, 2])
     with col2:
@@ -271,13 +297,39 @@ with tab3:
     st.subheader("Historial de instrucciones personalizadas")
 
     result_instrucciones = req.get(url="http://127.0.0.1:8000/ListarInstruccionesInactivas")
-    data_instrucciones = result_instrucciones.json()
 
-    df = pd.DataFrame(data_instrucciones, columns = ['Instrucción', 'Estado'])
-    st.table(df)
+    data_instrucciones = result_instrucciones.json()
+    instrucciones_por_fecha = {}
+    if data_instrucciones:
+
+        for instruccion in data_instrucciones:
+            fecha = instruccion[1]
+            if fecha not in instrucciones_por_fecha:
+                instrucciones_por_fecha[fecha] = []
+            instrucciones_por_fecha[fecha].append(instruccion)
+
+        for fecha, instrucciones in instrucciones_por_fecha.items():
+            with st.expander(f"Instrucciones del {fecha}", expanded=False):
+                df = pd.DataFrame(
+                    [
+                        {"Instrucción": instruccion[0], 
+                         "Registrado por": instruccion[2]}
+                        for instruccion in instrucciones
+                    ]
+                )
+                st.table(df)
+    else:
+        st.caption("No hay instrucciones personalizadas anteriores registradas")
+
 
 with st.sidebar:
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    # st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    st.markdown(
+        f"""
+        <h1 style="color:#00205B;">Bienvenido, {st.session_state["username"]}!</h1>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.write("")
     

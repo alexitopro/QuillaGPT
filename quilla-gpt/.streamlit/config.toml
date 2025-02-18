@@ -1,5 +1,6 @@
 [theme]
 base = "light"
+primaryColor="#00CFB4"
 [client]
 toolbarMode = "minimal"
 showSidebarNavigation = false

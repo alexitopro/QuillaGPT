@@ -14,7 +14,7 @@ def load_lottie_json(filepath: str):
 
 with st.container(height=160, border=False):
     st.header("Deriva tu consulta")
-    st.write("Y si no encuentras la respuesta que buscabas, puedo ayudarte a crear un ticket y derivar tu consulta al administrador para que te brinde una respuesta por correo electrónico.")
+    st.write("Y si no encuentras la respuesta que buscabas, puedo derivar derivar tu consulta al administrador para que te brinde una respuesta por correo electrónico.")
 
 lottie_json = load_lottie_json("./static/email_support_p4.json")
 

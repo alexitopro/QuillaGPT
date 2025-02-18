@@ -6,6 +6,7 @@ import pymysql
 from streamlit_extras.stylable_container import stylable_container
 import requests as req
 import json
+import base64
 
 if "user" not in st.session_state:
     st.session_state.user = None
@@ -55,35 +56,59 @@ def login_callback():
 
 if not st.session_state.user:
 
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        st.markdown("<img src='app/static/squirrel.png' width='200' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
+    col1, col3 = st.columns([2, 2])
+    with col1:
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
+        st.write("")
 
+        st.markdown("<img src='app/static/panda.png' width='200' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
+
+        #00205B
         st.markdown(
-            """
-            <h2 style="text-align: center;">¡Bienvenido a QuillaGPT!</h2>
-            """,
+            '<div style="color: #00205B; font-size: 3em; font-weight: 600;">PandaGPT</div>',
             unsafe_allow_html=True
         )
 
-        st.write("Quilla es tu asistente virtual de la Facultad de Ciencias e Ingeniería de la PUCP. Está aquí para ayudarte con todas tus dudas sobre trámites académico-administrativos, como reclamo de notas, retiro de cursos y más. Puedes contar con ella las 24 horas del día para resolver tus preguntas de manera rápida y sencilla.")
+        st.markdown(
+            '<div style="color: #00205B; font-size: 1.5em; font-weight: 600;">Un asistente virtual pensado en ti para trámites de la Facultad de Ciencias e Ingeniería.</div>',
+            unsafe_allow_html=True
+        )
 
+        #00CFB4
         with stylable_container(
         key="registrarse_button",
         css_styles="""
                 .element-container:has(#button-after) + div button {
-                    background-color: #31333F !important;
+                    background-color: #00CFB4 !important;
                     color: white !important;
-                    border-color: #31333F !important;
+                    border-color: #00CFB4 !important;
                 }
                 .element-container:has(#button-after) + div button::hover {
-                    background-color: #31333F !important;
-                    border-color: #31333F !important;
+                    background-color: #00CFB4 !important;
+                    border-color: #00CFB4 !important;
                 }
                 """,
         ):
             st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
             st.button("Iniciar sesión con Google", type = 'secondary', icon=':material/login:', use_container_width = True, on_click=login_callback)
+
+    with col3:
+        file_ = open("./static/animacion_main.gif", "rb")
+        contents = file_.read()
+        data_url = base64.b64encode(contents).decode("utf-8")
+        file_.close()
+
+        st.markdown(
+            f"""
+            <div style="text-align: center;">
+                <img src="data:image/gif;base64,{data_url}" style="width: 85%;">
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         st.stop()
 
