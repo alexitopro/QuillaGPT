@@ -137,11 +137,33 @@ class EnviarFeedback(BaseModel):
 
 @app.post("/RequestQuery", status_code=status.HTTP_201_CREATED)
 def request_query(enviar_feedback: EnviarFeedback):
+    cursor.execute("SET SESSION group_concat_max_len = 100000")
     query = """
-        INSERT INTO RequestQuery (query, register_date, classification, resolved, user_id, active)
-        VALUES (%s, %s, (SELECT classification FROM Message WHERE message_id = %s AND active = 1), 0, (SELECT user_id FROM User WHERE email = %s), 1)
+        INSERT INTO RequestQuery (query, register_date, classification, resolved, user_id, context, active)
+        VALUES (%s, %s, (SELECT classification FROM Message WHERE message_id = %s AND active = 1), 0, (SELECT user_id FROM User WHERE email = %s), 
+        (
+            SELECT GROUP_CONCAT(
+                CASE
+                    WHEN role = 'user' THEN CONCAT('Usuario: ', content)
+                    WHEN role = 'assistant' THEN CONCAT('Asistente: ', content)
+                END
+                ORDER BY message_id ASC SEPARATOR '\n'
+            ) AS formatted_output
+            FROM (
+                SELECT *
+                FROM Message
+                WHERE session_id = (
+                    SELECT session_id
+                    FROM Message
+                    WHERE message_id = %s
+                )
+                ORDER BY timestamp DESC
+                LIMIT 5
+            ) AS last_messages
+        ),
+        1)
     """
-    cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email))
+    cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id))
     conn.commit()
 
 class ActualizarDerivado(BaseModel):
@@ -345,6 +367,20 @@ def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
             AND (%s = 'Todos' OR classification = %s)
     """
     cursor.execute(query, (solicitudes_soporte.estado, 1 if solicitudes_soporte.estado == "Resuelta" else 0 if solicitudes_soporte.estado == "Pendiente" else None, solicitudes_soporte.tema, solicitudes_soporte.tema))
+    result = cursor.fetchall()
+    return result
+
+class SolicitudSoporteIndividual(BaseModel):
+    indice: int
+
+@app.get("/ObtenerContextoSolicitud", status_code=status.HTTP_200_OK)
+def get_support_requests(solicitud: SolicitudSoporteIndividual):
+    query = """
+        SELECT context
+        FROM RequestQuery
+        WHERE request_query_id = %s
+    """
+    cursor.execute(query, (solicitud.indice,))
     result = cursor.fetchall()
     return result
 

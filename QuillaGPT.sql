@@ -80,6 +80,7 @@ CREATE TABLE `RequestQuery` (
   `register_date` date,
   `resolved` bool,
   `user_id` integer,
+  `context` TEXT COMMENT 'holds the context of the message',
   `active` bool
 );
 

@@ -14,7 +14,7 @@ from io import BytesIO
 #BARRA DE NAVEGACION
 styles = {
     "nav": {
-        "background-color": "#31333F",
+        "background-color": "#00205B",
         "justify-content": "space-between"
     },
     "div": {
@@ -103,7 +103,7 @@ if "bandera" not in st.session_state:
     st.session_state.bandera = False
 
 #modal para revisar la consulta del estudiante
-@st.dialog("Detalle de la consulta")
+@st.dialog("Detalle de la consulta", width='large')
 def verDetalle(selected_index):
 
     st.text_input("**Correo del usuario**", value=df.loc[selected_index, "Correo del usuario"], disabled=True)
@@ -112,11 +112,20 @@ def verDetalle(selected_index):
 
     st.text_area("**Consulta**", value=df.loc[selected_index, "Consulta"], disabled=True)
 
+    with st.expander("Contexto", expanded=False):
+        input = {"indice" : int(df.loc[selected_index, "ID"])}
+        result = req.get(url="http://127.0.0.1:8000/ObtenerContextoSolicitud", data=json.dumps(input))
+        data = result.json()
+        cleaned_data = data[0][0].replace("\\n", "\n").strip()
+
+        st.text_area("**Context**", value=cleaned_data, disabled=True, label_visibility="collapsed", height=150)
+        # st.write(cleaned_data)
+
     if df.loc[selected_index, "Estado"] == "Resuelta":
         respuesta = st.text_area("**Respuesta**", value=df.loc[selected_index, "Respuesta"], disabled = True)
     else:
         respuesta = st.text_area("**Respuesta**", placeholder="Ingrese la respuesta a la consulta...")
-        col1, col2 = st.columns([4, 2])
+        col1, col2 = st.columns([3, 0.85])
         with col2:
             if 'query_resolved_button' in st.session_state and st.session_state.query_resolved_button == True:
                 st.session_state.query_running = True

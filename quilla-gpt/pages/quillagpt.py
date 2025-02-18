@@ -218,15 +218,7 @@ if st.session_state.messages == [] and st.session_state.prompt_ingresado == None
         st.markdown("<img src='app/static/panda.png' width='150' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
         st.write("")
         st.write("")
-        st.markdown(
-            """
-            <div style="color:#00205B; font-size:36px; font-weight:600;">
-                ¿En qué te puedo ayudar?
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        # st.header("¿En qué te puedo ayudar?", anchor = False)
+        st.header("¿En qué te puedo ayudar?", anchor = False)
         st.write("")
         st.write("")
 else:
@@ -238,13 +230,7 @@ else:
         st.write("")
         st.write("")
         st.write("")
-        # st.title("¡Hola, soy PandaGPT! ¿En qué te puedo ayudar?")
-        st.markdown(
-            """
-            <h1 style="color:#00205B;">¡Hola, soy PandaGPT! ¿En qué te puedo ayudar?</h1>
-            """,
-            unsafe_allow_html=True
-        )
+        st.title("¡Hola, soy PandaGPT! ¿En qué te puedo ayudar?", anchor = False)
         st.write(
             "Recuerda que los datos personales que proporciones en este chatbot serán de uso exclusivo para atender las consultas que formules."
         )
@@ -521,9 +507,7 @@ def save_feedback(respuesta):
     if respuesta == 1:
         input = {"message_id" : st.session_state.message_response_id, "derivado" : 0}
         req.put(url="http://127.0.0.1:8000/ActualizarDerivado", data = json.dumps(input))
-        bandera = st.success("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.")
-        time.sleep(3)
-        bandera.empty()
+        st.toast("Hemos registrado tu feedback. Nos alegra que la respuesta brindada sea de tu satisfacción.")
     else:
         config_feedback(st.session_state.message_response_id)
 
@@ -533,9 +517,15 @@ def save_feedback(respuesta):
     st.session_state.message_response_id = None
 
 if st.session_state.feedback_response:
-    feedback = st.feedback("thumbs", key=st.session_state.fbk)
-    if feedback is not None:
-        save_feedback(feedback)
+    cols= st.columns([0.35, 0.5, 10], vertical_alignment="center", gap='small')
+    with cols[1]:
+        feedback = st.feedback("thumbs", key=st.session_state.fbk)
+        if feedback is not None:
+            save_feedback(feedback)
+    with cols[2]:
+        if st.button("Derivar consulta", type="tertiary"):
+            st.session_state.feedback_response = False
+            config_feedback(st.session_state.message_response_id)
 
 st.write("")
 st.write("")

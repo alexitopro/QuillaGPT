@@ -52,8 +52,6 @@ def login_callback():
     st.session_state.credentials = credentials
     st.session_state.user = id_info
 
-    print(st.session_state.user)
-
 if not st.session_state.user:
 
     col1, col3 = st.columns([2, 2])
