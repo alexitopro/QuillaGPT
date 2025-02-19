@@ -157,7 +157,7 @@ Recuerda que este proceso puede tardar algunos minutos en completarse.""")
     if st.button('Actualizar información', disabled=st.session_state.running, key='run_button', icon=":material/sync:", type="secondary"):
         status = st.progress(0, text="Extrayendo datos de la Facultad de Ciencias e Ingeniería...")
         scraper()
-        status.progress(0.60, text="Actualizando base de datos de QuillaGPT...")
+        status.progress(0.60, text="Actualizando base de datos de PandaGPT...")
         create_web_scraping_embeddings()
         status.progress(0.99, text="Actualización completada exitosamente...")
         time.sleep(3)
@@ -198,11 +198,11 @@ with tab2:
         input = {"contenido" : encoded_content, "filename" : file_name, "current_date" : current_date}
         result = req.post(url="http://127.0.0.1:8000/CargarDocumento", data = json.dumps(input))
         file_id = result.json()
-        st.toast("El archivo se ha cargado a la base de datos exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
+        st.toast("El archivo se ha cargado a la base de datos exitosamente. Actualizando la base de datos de PandaGPT...", icon=":material/sync:")
         #spinner mientras se actualiza en la vectorial bd
-        with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+        with st.spinner("Actualizando la base de datos de PandaGPT..."):
             procesar_arch_db(document.name, document, 'DocumentoAdicional_' + str(file_id) + '_')
-            st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+            st.toast("Se ha actualizado la base de datos de PandaGPT exitosamente", icon=":material/check:")
             st.session_state["documents"].append(document.name)
 
     col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
@@ -214,11 +214,11 @@ with tab2:
                 for file_id in st.session_state["uploader_key_other"]:
                     req.delete(f"http://127.0.0.1:8000/File/{file_id}")
 
-                st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de QuillaGPT...", icon=":material/sync:")
-                with st.spinner("Actualizando la base de datos de QuillaGPT..."):
+                st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de PandaGPT...", icon=":material/sync:")
+                with st.spinner("Actualizando la base de datos de PandaGPT..."):
                     for file_id in st.session_state["uploader_key_other"]:
                         eliminar_arch_db('DocumentoAdicional_' + str(file_id) + '_')
-                    st.toast("Se ha actualizado la base de datos de QuillaGPT exitosamente", icon=":material/check:")
+                    st.toast("Se ha actualizado la base de datos de PandaGPT exitosamente", icon=":material/check:")
                 st.session_state["uploader_key_other"] = []
             else:
                 st.toast("No se han seleccionado archivos para eliminar", icon=':material/error:')
@@ -285,7 +285,7 @@ with tab3:
 
     st.write("Las instrucciones personalizadas permiten compartir lo que quieras que PandaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las conversaciones nuevas que los estudiantes de la PUCP tengan con él.")
 
-    instrucciones = st.text_area("**Instrucciones personalizadas**", height=450, max_chars=None, placeholder="Escribe lo que quieres que sepa QuillaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
+    instrucciones = st.text_area("**Instrucciones personalizadas**", height=450, max_chars=None, placeholder="Escribe lo que quieres que sepa PandaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
 
     col1, col2, col3 = st.columns([8, 2, 2])
     with col2:

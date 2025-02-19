@@ -1,9 +1,9 @@
 import streamlit as st
 from dotenv import load_dotenv
 from openai import OpenAI
+import openai
 import os
-from pinecone import Pinecone
-from sentence_transformers import SentenceTransformer
+from pinecone import Pinecone, ServerlessSpec
 from streamlit_navigation_bar import st_navbar
 from streamlit_extras.stylable_container import stylable_container
 import requests as req
@@ -17,9 +17,11 @@ from io import BytesIO
 #inicializar las variables de entorno
 load_dotenv()
 cliente = OpenAI(
-  base_url = "https://integrate.api.nvidia.com/v1",
+#   base_url = "https://integrate.api.nvidia.com/v1",
   api_key = os.getenv("OPENAI_API_KEY")
 )
+
+# openai.api_key = os.getenv("OPENAI_API_KEY")
 
 #BARRA DE NAVEGACION
 styles = {
@@ -96,15 +98,22 @@ else:
 def inicializar_pinecone():
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
     index_name = "quillagpt-index"
+    if not pc.has_index(index_name):
+        pc.create_index(
+            name = index_name,
+            dimension = 1536,  #dimensiones del modelo a utilizar
+            metric = "cosine",
+            spec = ServerlessSpec(cloud="aws", region="us-east-1")
+        )
     index = pc.Index(index_name)
     return index
 index = inicializar_pinecone()
 
 #cargar el modelo de embedding
-@st.cache_data(show_spinner="Inicializando PandaGPT...")
-def cargar_modelo():
-    return SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
-model = cargar_modelo()
+# @st.cache_data(show_spinner="Inicializando PandaGPT...")
+# def cargar_modelo():
+#     return SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+# model = cargar_modelo()
 
 #cargar el archivo css
 def cargar_css(file_path):
@@ -340,14 +349,13 @@ else:
                 if st.session_state.messages == []:
                     #generamos el titulo de la session
                     response = cliente.chat.completions.create(
-                        model="meta/llama-3.3-70b-instruct",
+                        model="gpt-4o-mini",
                         messages=[
                             {"role": "system", "content": "Genera un titulo corto y apropiado de hasta máximo 5 palabras para la nueva conversación con el usuario según la consulta que recibes. Responde únicamente con el nombre del título correspondiente, nada más. Recuerda que es hasta máximo 5 palabras el título."},
                             {"role": "user", "content": prompt},
                         ],
                         temperature=0.2,
-                        top_p=0.7,
-                        max_tokens=8192,
+                        max_tokens=20,
                         stream=False
                     )
                     titulo = response.choices[0].message.content
@@ -373,7 +381,15 @@ else:
                     conversacion.append({"role": message["role"], "content": message["content"]})
 
                 #buscar en pinecone los resultados del prompt
-                query_embedding = model.encode([prompt])[0].tolist()
+                # query_embedding = model.encode([prompt])[0].tolist()
+
+                response = openai.embeddings.create(
+                    model="text-embedding-3-small",
+                    input=[prompt]
+                )
+
+                query_embedding = response.data[0].embedding
+
                 results = index.query(
                     namespace = "quillagpt-namespace",
                     vector = query_embedding,
@@ -384,42 +400,43 @@ else:
                 retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
                 contexto = "\n".join(retrieved_documents)
 
+                print(results)
+
                 #generamos la respuesta natural
                 stream =  cliente.chat.completions.create(
-                    model = "meta/llama-3.3-70b-instruct",
+                    model = "gpt-4o-mini",
                     messages=[
                         sistema,
                         *conversacion,
                         {"role": "user", "content": prompt},
                         {"role": "assistant", "content": contexto}
                     ],
-                    temperature = 0.2,
-                    top_p = 0.7,
-                    max_tokens = 8192,
+                    temperature = 0.5,
+                    max_tokens = 1000,
                     stream = True
                 )
 
-                #generamos respuesta como string
-                respuesta =  cliente.chat.completions.create(
-                    model = "meta/llama-3.3-70b-instruct",
-                    messages=[
-                        sistema,
-                        *conversacion,
-                        {"role": "user", "content": prompt},
-                        {"role": "assistant", "content": contexto}
-                    ],
-                    temperature = 0.2,
-                    top_p = 0.7,
-                    max_tokens = 8192,
-                    stream = False
-                )
+                # #generamos respuesta como string
+                # respuesta =  cliente.chat.completions.create(
+                #     model = "meta/llama-3.3-70b-instruct",
+                #     messages=[
+                #         sistema,
+                #         *conversacion,
+                #         {"role": "user", "content": prompt},
+                #         {"role": "assistant", "content": contexto}
+                #     ],
+                #     temperature = 0.2,
+                #     top_p = 0.7,
+                #     max_tokens = 1000,
+                #     stream = False
+                # )
 
             response = st.write_stream(stream)
             st.session_state.feedback_response = True
 
         #identificamos el tema del mensaje
         tema_response = cliente.chat.completions.create(
-            model="meta/llama-3.3-70b-instruct",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": """
                 Cual es el titulo que mejor describe la consulta? Obligatoriamente debe ser uno de los siguientes:
@@ -443,8 +460,7 @@ else:
                 {"role": "user", "content": "La consulta es" + prompt},
             ],
             temperature=0.2,
-            top_p=0.7,
-            max_tokens=8192,
+            max_tokens=50,
             stream=False
         )
         tema = tema_response.choices[0].message.content
@@ -486,7 +502,7 @@ if st.session_state.feedback_sent:
 
 @st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
 def config_feedback(message_id):
-  st.write("Si QuillaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.")
+  st.write("Si PandaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.")
   derivar = st.text_area("**Consulta a derivar al administrador**", height=250, max_chars=500, placeholder="Escribe aquí tu consulta...")
   col1, col2, col3 = st.columns([5, 2, 2])
   with col2:

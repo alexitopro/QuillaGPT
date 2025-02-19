@@ -1,19 +1,26 @@
 import time
 import streamlit as st
+import os
+import openai
 
 def create_query_embedding(arch_json):
-    from sentence_transformers import SentenceTransformer
     from pinecone import Pinecone, ServerlessSpec
     
     #inicializar Pinecone
     pc = Pinecone(api_key=st.secrets["pinecone"]["PINECONE_API_KEY"])
 
-    #cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+    #cargar el modelo de embedding: en este caso usamos el modelo text-embedding-3-large
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     #values de pinecone sera la pregunta de la query
     texts = [arch_json['consulta']]
-    embeddings = model.encode(texts).tolist()
+    def crear_embeddings_openai(textos):
+        response = openai.embeddings.create(
+            model="text-embedding-3-small",
+            input=textos
+        )
+        return [embedding.embedding for embedding in response.data]
+    embeddings = crear_embeddings_openai(texts)
 
     #crear el index de Pinecone
     index_name = "quillagpt-index"
@@ -21,7 +28,7 @@ def create_query_embedding(arch_json):
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 384,  #dimensiones del modelo a utilizar
+            dimension = 1536,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )

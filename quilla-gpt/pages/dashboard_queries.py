@@ -44,7 +44,7 @@ icons = {
 
 st.set_page_config(
     layout = "wide",
-    page_title = "QuillaGPT"
+    page_title = "PandaGPT"
 )
 
 if "page_session" not in st.session_state:
@@ -142,7 +142,7 @@ def verDetalle(selected_index):
                 data['consulta'] = df.loc[selected_index, "Consulta"]
                 data['respuesta'] = respuesta
                 data['id'] = int(df.loc[selected_index, "ID"])
-                data['fuente'] = "Consulta derivada al administrador del banco de consultas de QuillaGPT"
+                data['fuente'] = "Consulta derivada al administrador del banco de consultas de PandaGPT"
                 json_data = json.dumps(data)
                 data_dict = json.loads(json_data)
                 create_query_embedding(data_dict)
@@ -151,7 +151,7 @@ def verDetalle(selected_index):
                 gmail_password = os.getenv("GMAIL_PASSWORD")
                 sent_from = gmail_user
                 sent_to = [df.loc[selected_index, "Correo del usuario"]]
-                subject = f"{str(int(df.loc[selected_index, "ID"])).zfill(5)} - Su consulta en QuillaGPT ha sido resuelta"
+                subject = f"{str(int(df.loc[selected_index, "ID"])).zfill(5)} - Su consulta en PandaGPT ha sido resuelta"
                 message = f"""
 <!DOCTYPE html>
 <html>
@@ -166,7 +166,7 @@ def verDetalle(selected_index):
     <b>Consulta:</b> {df.loc[selected_index, "Consulta"]}<br>
     <b>Respuesta:</b> {respuesta}</p>
 
-    <p>Agradecemos tu paciencia y confianza en QuillaGPT. Esperamos que la solución brindada haya sido de tu satisfacción.</p>
+    <p>Agradecemos tu paciencia y confianza en PandaGPT. Esperamos que la solución brindada haya sido de tu satisfacción.</p>
 
     <p>Si tienes alguna otra pregunta o necesitas más ayuda, no dudes en contactarnos.</p>
 
@@ -181,10 +181,10 @@ def verDetalle(selected_index):
     <p><b>Correo electrónico:</b><br>
     informes-fci@pucp.edu.pe</p>
 
-    <p>¡Gracias por usar a QuillaGPT!</p>
+    <p>¡Gracias por usar a PandaGPT!</p>
 
     <p><b>Atentamente,</b><br>
-    <b>El equipo de QuillaGPT</b></p>
+    <b>El equipo de PandaGPT</b></p>
 </body>
 </html>
 """

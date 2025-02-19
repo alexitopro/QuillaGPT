@@ -2,10 +2,10 @@ import time
 import os
 import json
 from dotenv import load_dotenv
+import openai
 
 def create_web_scraping_embeddings():
 
-    from sentence_transformers import SentenceTransformer
     from pinecone import Pinecone, ServerlessSpec
 
     #cargar la variable de entorno
@@ -14,8 +14,8 @@ def create_web_scraping_embeddings():
     #inicializar Pinecone
     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
-    #cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+    #cargar el modelo de embedding: en este caso usamos el modelo text-embedding-3-large
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     #cargamos la data que se usara para generar los embeddings, proviene de la carpeta data
     data = []
@@ -27,7 +27,14 @@ def create_web_scraping_embeddings():
 
     #crear embeddings para nombre
     texts = [d["nombre"] for d in data]
-    embeddings = model.encode(texts).tolist()
+
+    def get_embeddings(texts):
+        response = openai.embeddings.create(
+            model="text-embedding-3-small",
+            input=texts
+        )
+        return [embedding.embedding for embedding in response.data]
+    embeddings = get_embeddings(texts)
 
     #crear el index de Pinecone
     index_name = "quillagpt-index"
@@ -35,7 +42,7 @@ def create_web_scraping_embeddings():
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 384,  #dimensiones del modelo a utilizar
+            dimension = 1536,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )

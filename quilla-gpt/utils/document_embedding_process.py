@@ -1,6 +1,7 @@
 import os
 import re
 import streamlit as st
+import openai
 
 #conectarse a pinecone y crear un index si tdv no se ha hecho
 def pinecone_init(index_name):
@@ -12,7 +13,7 @@ def pinecone_init(index_name):
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 384,  #dimensiones del modelo a utilizar
+            dimension = 1536,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )
@@ -48,15 +49,15 @@ def procesar_arch_pdf(arch):
 
     return texto_con_fuente
 
-#buscar el archivo pdf que se encuentra en data
-# arch = [file for file in os.listdir("data_pdf") if file.endswith('.pdf')]
-# if not arch:
-#     raise FileNotFoundError("No se encontró ningún archivo PDF en la carpeta especificada.")
-
 #crear embeddings
-def crear_embeddings(texto, model):
-    embeddings = model.encode(texto).tolist()
-    return embeddings
+def crear_embeddings(textos):
+    text_list = [item['text'] for item in textos]
+    #generar embeddings con open ai
+    response = openai.embeddings.create(
+        model="text-embedding-3-small",
+        input=text_list
+    )
+    return [embedding.embedding for embedding in response.data]
 
 #insertar datos en Pinecone
 def insertar_datos(data, embeddings, pc, tipo, index_name):
@@ -79,10 +80,9 @@ def insertar_datos(data, embeddings, pc, tipo, index_name):
 
 #procesar el archivo pdf que se encuentra en la base de datos
 def procesar_arch_db(nombre_arch, arch, tipo):
-    from sentence_transformers import SentenceTransformer
 
-    #cargar el modelo de embedding: en este caso usamos all mini lm l12 v2 de HuggingFace
-    model = SentenceTransformer('sentence-transformers/all-MiniLM-L12-v2')
+    #cargar el modelo de embedding: en este caso usamos el modelo text-embedding-3-large
+    openai.api_key = os.getenv("OPENAI_API_KEY")
     #crear el index de Pinecone
     index_name = "quillagpt-index"
 
@@ -101,7 +101,7 @@ def procesar_arch_db(nombre_arch, arch, tipo):
 
     #procesamos el archivo pdf y creamos los embeddings
     texto = procesar_arch_pdf(archivo_temporal)
-    embeddings = crear_embeddings(texto, model)
+    embeddings = crear_embeddings(texto)
 
     #insertamos los datos
     insertar_datos(texto, embeddings, pc, tipo, index_name)
