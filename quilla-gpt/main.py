@@ -94,7 +94,21 @@ if not st.session_state.user:
             st.button("Iniciar sesión con Google", type = 'secondary', icon=':material/login:', use_container_width = True, on_click=login_callback)
 
     with col3:
-        file_ = open("./static/animacion_main.gif", "rb")
+        # file_ = open("./static/animacion_main.gif", "rb")
+        # contents = file_.read()
+        # data_url = base64.b64encode(contents).decode("utf-8")
+        # file_.close()
+
+        # st.markdown(
+        #     f"""
+        #     <div style="text-align: center;">
+        #         <img src="data:image/gif;base64,{data_url}" style="width: 85%;">
+        #     </div>
+        #     """,
+        #     unsafe_allow_html=True,
+        # )
+
+        file_ = open("./static/animation_main.webm", "rb")
         contents = file_.read()
         data_url = base64.b64encode(contents).decode("utf-8")
         file_.close()
@@ -102,7 +116,10 @@ if not st.session_state.user:
         st.markdown(
             f"""
             <div style="text-align: center;">
-                <img src="data:image/gif;base64,{data_url}" style="width: 85%;">
+                <video autoplay loop muted style="width: 88%;">
+                    <source src="data:video/webm;base64,{data_url}" type="video/webm">
+                    Your browser does not support the video tag.
+                </video>
             </div>
             """,
             unsafe_allow_html=True,
