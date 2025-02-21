@@ -377,15 +377,18 @@ else:
 
                 #preparar el historial de conversacion
                 conversacion = []
+                historial_conversacion = ""
                 for message in st.session_state.messages:
                     conversacion.append({"role": message["role"], "content": message["content"]})
+                    historial_conversacion += f"{message['role']}: {message['content']}\n"
 
                 #buscar en pinecone los resultados del prompt
                 # query_embedding = model.encode([prompt])[0].tolist()
 
+                historial_conversacion += f"user: {prompt}\n"
                 response = openai.embeddings.create(
                     model="text-embedding-3-small",
-                    input=[prompt]
+                    input=historial_conversacion
                 )
 
                 query_embedding = response.data[0].embedding
@@ -533,7 +536,7 @@ def save_feedback(respuesta):
     st.session_state.message_response_id = None
 
 if st.session_state.feedback_response:
-    cols= st.columns([0.35, 0.5, 10], vertical_alignment="center", gap='small')
+    cols= st.columns([0.45, 0.6, 10], vertical_alignment="center", gap='small')
     with cols[1]:
         feedback = st.feedback("thumbs", key=st.session_state.fbk)
         if feedback is not None:

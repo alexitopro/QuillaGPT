@@ -327,7 +327,6 @@ def create_custom_instruction(instruction: InsertarInstruccion):
         WHERE active = 1
     """
     cursor.execute(query)
-    conn.commit()
 
     query = """
         SELECT user_id FROM User WHERE email = %s

@@ -61,7 +61,6 @@ if not st.session_state.user:
         st.write("")
         st.write("")
         st.write("")
-
         st.markdown("<img src='app/static/panda.png' width='200' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
 
         #00205B
