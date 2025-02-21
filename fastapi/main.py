@@ -157,13 +157,14 @@ def request_query(enviar_feedback: EnviarFeedback):
                     FROM Message
                     WHERE message_id = %s
                 )
+                AND message_id <= %s
                 ORDER BY timestamp DESC
                 LIMIT 5
             ) AS last_messages
         ),
         1)
     """
-    cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id))
+    cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id, enviar_feedback.message_id))
     conn.commit()
 
 class ActualizarDerivado(BaseModel):

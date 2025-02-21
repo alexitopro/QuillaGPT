@@ -258,13 +258,12 @@ if event.selection is not None:
 
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
-    
     st.write("")
     
     if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
         st.switch_page("./pages/dashboard_users.py")
 
-    if st.button("Gestión de Conocimiento", use_container_width=True, icon=":material/description:", type="secondary"):
+    if st.button("Gestión del Conocimiento", use_container_width=True, icon=":material/description:", type="secondary"):
         st.switch_page("./pages/dashboard_knowledge.py")
 
     st.button("Solicitudes de Soporte", use_container_width=True, icon=":material/question_answer:", disabled=True)

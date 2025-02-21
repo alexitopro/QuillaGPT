@@ -177,7 +177,7 @@ with st.sidebar:
 
     st.button("Gestión de Usuarios", use_container_width=True, icon=":material/group:", disabled=True)
 
-    if st.button("Gestión de Conocimiento", use_container_width=True, type="secondary", icon=":material/description:"):
+    if st.button("Gestión del Conocimiento", use_container_width=True, type="secondary", icon=":material/description:"):
         st.switch_page("./pages/dashboard_knowledge.py")
 
     if st.button("Solicitudes de Soporte", use_container_width=True, type="secondary", icon=":material/question_answer:"):

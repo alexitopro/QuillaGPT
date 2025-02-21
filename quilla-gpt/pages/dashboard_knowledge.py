@@ -294,7 +294,7 @@ with tab3:
     with col3:
         st.button("Editar instrucciones" if st.session_state["disabled"] else "Guardar instrucciones", type="primary", on_click=save_instructions, use_container_width=True, args=(instrucciones, ))
 
-    st.subheader("Historial de instrucciones personalizadas")
+    st.subheader("Historial de instrucciones personalizadas", anchor=False)
 
     result_instrucciones = req.get(url="http://127.0.0.1:8000/ListarInstruccionesInactivas")
 
@@ -336,7 +336,7 @@ with st.sidebar:
     if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
         st.switch_page("./pages/dashboard_users.py")
 
-    st.button("Gestión de Conocimiento", use_container_width=True, icon=":material/description:", disabled=True)
+    st.button("Gestión del Conocimiento", use_container_width=True, icon=":material/description:", disabled=True)
 
     if st.button("Solicitudes de Soporte", use_container_width=True, type="secondary", icon=":material/question_answer:"):
         st.switch_page("./pages/dashboard_queries.py")
