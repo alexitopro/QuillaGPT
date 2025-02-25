@@ -329,7 +329,7 @@ if st.session_state.messages == [] and st.session_state.prompt_ingresado == None
             st.rerun()
         col1, col2, col3 = st.columns([1, 5, 1])
         with col2:
-            st.caption("Puedes consultar sobre trámites como reincorporación, retiro de cursos, convalidación de cursos, reclamo de notas y mucho más. ¡Pregunta lo que necesites que estaré aquí para apoyarte!")
+            st.caption("Puedes consultar sobre cómo realizar tu trámite de reincorporación, cómo retirarte de un curso, cómo acreditar un curso, cómo realizar el reclamo de notas y entre otras cosas más. ¡Pregunta lo que necesites; estaré aquí para apoyarte!")
 else:
     if prompt := st.chat_input(placeholder = "Ingresa tu consulta sobre algún procedimiento académico-administrativo de la PUCP") or st.session_state.prompt_ingresado:
         if st.session_state.prompt_ingresado is not None:
