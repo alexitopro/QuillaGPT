@@ -23,6 +23,20 @@ div[data-testid="InputInstructions"] > span:nth-child(1) {
     visibility: hidden;
 }
 
+div[data-testid="stVerticalBlockBorderWrapper"] div[class="st-emotion-cache-4uzi61 eu6p4el5"] div[class*="st-key-container"] h3 {
+    font-size: larger;
+    font-weight: bolder;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"] div[class="st-emotion-cache-4uzi61 eu6p4el5"] div[class*="st-key-container"] p {
+    margin-bottom: 2px;
+}
+
+div[data-testid="stVerticalBlockBorderWrapper"] div[class="st-emotion-cache-4uzi61 eu6p4el5"] div[class*="st-key-borrar"] button[data-testid="stBaseButton-secondary"] {
+    color: red !important;
+    border: 2px solid red !important;
+}
+
 /* Apple Bubble Chat CSS */
 .chat-row {
     display: flex;
@@ -98,4 +112,8 @@ div[data-testid="InputInstructions"] > span:nth-child(1) {
 /* Tamanio para los tabs */
 .st-emotion-cache-wq5ihp {
     font-size: large;
+}
+
+.st-emotion-cache-1p9ibxm h1 {
+    color: #00205B;
 }

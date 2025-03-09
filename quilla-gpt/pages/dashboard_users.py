@@ -55,11 +55,13 @@ if "bandera" not in st.session_state:
 #modal para revisar la consulta del estudiante
 @st.dialog("Detalle del usuario")
 def verDetalle(selected_index):
-    st.text_input("**Correo electrónico**", value=df.loc[selected_index, "Correo electrónico"], disabled=True)
+    st.text_input("**Nombre de usuario**", value=data[selected_index][1], disabled=True)
 
-    rol_detalle = st.selectbox("**Rol**",  ["Administrador", "Estudiante"], disabled=True if df.loc[selected_index, "Correo electrónico"] == st.session_state.user["email"] else False, index=0 if df.loc[selected_index, "Rol"] == "Administrador" else 1)
+    st.text_input("**Correo electrónico**", value=data[selected_index][2], disabled=True)
 
-    st.text_input("**Estado**", value=df.loc[selected_index, "Estado"], disabled=True)
+    rol_detalle = st.selectbox("**Rol**",  ["Administrador", "Estudiante"], disabled=True if data[selected_index][2] == st.session_state.user["email"] else False, index=0 if data[selected_index][3] == "Administrador" else 1)
+
+    st.text_input("**Estado**", value=data[selected_index][4], disabled=True)
 
     st.write("")
     col1, col2, col3 = st.columns([2, 3, 3])
@@ -68,9 +70,9 @@ def verDetalle(selected_index):
             st.session_state.tabla_id += 1
             st.rerun()
     with col3:
-        submitted = st.button("Guardar cambios", use_container_width=True, type="primary", disabled=True if df.loc[selected_index, "Correo electrónico"] == st.session_state.user["email"] else False)
+        submitted = st.button("Guardar cambios", use_container_width=True, type="primary", disabled=True if data[selected_index][2] == st.session_state.user["email"] else False)
         if submitted:
-            input = {"email" : df.loc[selected_index, "Correo electrónico"], "rol" : rol_detalle}
+            input = {"email" : data[selected_index][2], "rol" : rol_detalle}
             req.put(f"http://127.0.0.1:8000/User/CambiarRolUsuario", data = json.dumps(input))
             st.session_state.tabla_id += 1
         
@@ -136,6 +138,38 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.title("Gestión de Usuarios", anchor=False)
 
+#anadir css para el buscador
+st.markdown("""
+    <link rel="stylesheet" 
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+            
+    <script>
+        function triggerSearch() {
+            const searchBox = document.querySelector('div[data-testid="stTextInput"] input');
+            searchBox.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    </script>
+
+    <style>
+    div[data-testid="stTextInput"] {
+        position: relative;
+    }
+    div[data-testid="stTextInput"] input {
+        padding-right: 35px;
+    }
+    div[data-testid="stTextInput"]::after {
+        content: "search";
+        font-family: 'Material Symbols Outlined';
+        font-size: 20px;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        color: gray;
+        cursor: pointer;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 #contenido
 col1, col2, col3 = st.columns([2.5, 1.5, 1], vertical_alignment="bottom")
 with col1:
@@ -149,26 +183,36 @@ input = {"email" : usuario, "rol" : rol, "estado" : estado}
 result = req.get(url="http://127.0.0.1:8000/ObtenerUsuarios", data = json.dumps(input))
 data = result.json()
 
-# for i in range(len(data)):
-#     with st.container(border=True, key="container"+str(i)):
-#         st.subheader(f"Usuario {i+1}")
+for i in range(len(data)):
+    with st.container(border=True, key="container"+str(i)):
+        col_cont1, col_cont2 = st.columns([4, 0.25], vertical_alignment
+        ="center")
+        with col_cont1:
+            st.subheader(data[i][1], anchor=False)
+            st.write(f"**Correo electrónico:** {data[i][2]}")
+            st.write(f"**Rol:** {data[i][3]}")
+            st.write(f"**Estado:** {data[i][4]}")
+            st.write("")
+        with col_cont2:
+            if st.button("", key="editar"+str(i), type="secondary", icon=":material/edit:"):
+                verDetalle(i)
 
-df = pd.DataFrame(data, columns=["ID", "Nombre de usuario", "Correo electrónico", "Rol", "Estado"])
+# df = pd.DataFrame(data, columns=["ID", "Nombre de usuario", "Correo electrónico", "Rol", "Estado"])
 
-event = st.dataframe(
-    df,
-    on_select="rerun",
-    column_order=["Nombre de usuario", "Correo electrónico", "Rol", "Estado"],
-    selection_mode=["single-row"],
-    hide_index=True,
-    key = str(st.session_state.tabla_id),
-    use_container_width=True
-)
+# event = st.dataframe(
+#     df,
+#     on_select="rerun",
+#     column_order=["Nombre de usuario", "Correo electrónico", "Rol", "Estado"],
+#     selection_mode=["single-row"],
+#     hide_index=True,
+#     key = str(st.session_state.tabla_id),
+#     use_container_width=True
+# )
 
-if event.selection is not None:
-    if event.selection['rows']:
-        selected_index = event.selection['rows'][0]
-        verDetalle(selected_index)
+# if event.selection is not None:
+#     if event.selection['rows']:
+#         selected_index = event.selection['rows'][0]
+#         verDetalle(selected_index)
 
 obtenerContador = req.get(url="http://127.0.0.1:8000/ObtenerContadorSolicitudes")
 contadorRequests = obtenerContador.json()

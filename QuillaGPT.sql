@@ -58,6 +58,7 @@ VALUES
 
 CREATE TABLE `File` (
   `file_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `user_id` integer,
   `content` mediumblob,
   `type` varchar(255),
   `name` varchar(255),
@@ -88,6 +89,8 @@ CREATE TABLE `RequestQuery` (
 ALTER TABLE `Message` ADD FOREIGN KEY (`session_id`) REFERENCES `Session` (`session_id`);
 
 ALTER TABLE `Session` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
+
+ALTER TABLE `File` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
 
 ALTER TABLE `User` ADD FOREIGN KEY (`role_id`) REFERENCES `Role` (`role_id`);
 

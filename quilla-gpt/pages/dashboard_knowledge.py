@@ -188,7 +188,7 @@ with tab2:
         encoded_content = base64.b64encode(bytes_content).decode('utf-8')
         file_name = document.name
         current_date = datetime.now().strftime('%y-%m-%d')
-        input = {"contenido" : encoded_content, "filename" : file_name, "current_date" : current_date}
+        input = {"contenido" : encoded_content, "filename" : file_name, "current_date" : current_date, "correo" : st.session_state.user["email"]}
         result = req.post(url="http://127.0.0.1:8000/CargarDocumento", data = json.dumps(input))
         file_id = result.json()
         st.toast("El archivo se ha cargado a la base de datos exitosamente. Actualizando la base de datos de PandaGPT...", icon=":material/sync:")
@@ -198,53 +198,111 @@ with tab2:
             st.toast("Se ha actualizado la base de datos de PandaGPT exitosamente", icon=":material/check:")
             st.session_state["documents"].append(document.name)
 
-    col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
+    #anadir css para el buscador
+    st.markdown("""
+        <link rel="stylesheet" 
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+                
+        <script>
+            function triggerSearch() {
+                const searchBox = document.querySelector('div[data-testid="stTextInput"] input');
+                searchBox.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        </script>
+
+        <style>
+        div[data-testid="stTextInput"] {
+            position: relative;
+        }
+        div[data-testid="stTextInput"] input {
+            padding-right: 35px;
+        }
+        div[data-testid="stTextInput"]::after {
+            content: "search";
+            font-family: 'Material Symbols Outlined';
+            font-size: 20px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            color: gray;
+            cursor: pointer;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns([0.75, 1], vertical_alignment="bottom")
     with col1:
-        document_name = st.text_input("**Buscar documento**", placeholder="Ingrese el nombre del archivo", max_chars=100)
-    with col2:
-        if st.button("Eliminar archivos seleccionados", type="primary", use_container_width=True):
-            if st.session_state["uploader_key_other"]:
-                for file_id in st.session_state["uploader_key_other"]:
-                    req.delete(f"http://127.0.0.1:8000/File/{file_id}")
+        document_name = st.text_input("**Buscar documento**", placeholder="Ingrese el nombre del archivo", max_chars=80)
+    # with col2:
+    #     if st.button("Eliminar archivos seleccionados", type="primary", use_container_width=True):
+    #         if st.session_state["uploader_key_other"]:
+    #             for file_id in st.session_state["uploader_key_other"]:
+    #                 req.delete(f"http://127.0.0.1:8000/File/{file_id}")
 
-                st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de PandaGPT...", icon=":material/sync:")
-                with st.spinner("Actualizando la base de datos de PandaGPT..."):
-                    for file_id in st.session_state["uploader_key_other"]:
-                        eliminar_arch_db('DocumentoAdicional_' + str(file_id) + '_')
-                    st.toast("Se ha actualizado la base de datos de PandaGPT exitosamente", icon=":material/check:")
-                st.session_state["uploader_key_other"] = []
-            else:
-                st.toast("No se han seleccionado archivos para eliminar", icon=':material/error:')
+    #             st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de PandaGPT...", icon=":material/sync:")
+    #             with st.spinner("Actualizando la base de datos de PandaGPT..."):
+    #                 for file_id in st.session_state["uploader_key_other"]:
+    #                     eliminar_arch_db('DocumentoAdicional_' + str(file_id) + '_')
+    #                 st.toast("Se ha actualizado la base de datos de PandaGPT exitosamente", icon=":material/check:")
+    #             st.session_state["uploader_key_other"] = []
+    #         else:
+    #             st.toast("No se han seleccionado archivos para eliminar", icon=':material/error:')
 
-    if document_name:
-        result_files = req.get("http://127.0.0.1:8000/File/")
-    else:
-        result_files = req.get(f"http://127.0.0.1:8000/File/{document_name}")
+    def borrarArchivos(file_id):
+        with st.spinner(""):
+            req.delete(f"http://127.0.0.1:8000/File/{data_files[i][0]}")
+            st.toast("Los archivos han sido eliminados exitosamente. Actualizando la base de datos de PandaGPT...", icon=":material/sync:")
+            eliminar_arch_db('DocumentoAdicional_' + str(file_id) + '_')
+            st.toast("Se ha actualizado la base de datos de PandaGPT exitosamente", icon=":material/check:")
+            st.session_state["uploader_key_other"] = []
+
+    result_files = req.get(f"http://127.0.0.1:8000/File/{document_name}")
     data_files = result_files.json()
-    df = pd.DataFrame(data_files, columns = ['ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro'])
-    df["Seleccionar"] = False
-    df = df[['Seleccionar', 'ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro']]
 
-    selected = st.data_editor(
-        data = df,
-        column_config={
-            "Seleccionar": st.column_config.CheckboxColumn(
-                "Seleccionar",
-                help="Seleccione los documentos que desea eliminar",
-                default=False,
-            )
-        },
-        disabled=['ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro'],
-        hide_index=True,
-        use_container_width=True
-    )
+    if not data_files and document_name != "":
+        st.caption("No se encontraron documentos con el nombre de documento ingresado.")
+    elif not data_files:
+        st.caption("No hay documentos registrados en la base de datos.")
+    else:
+        for i in range(len(data_files)):
+            with st.container(border=True, key="container"+str(i)):
+                col_cont1, col_cont2 = st.columns([4, 0.25], vertical_alignment
+                ="center")
+                with col_cont1:
+                    st.subheader(data_files[i][1], anchor=False)
+                    st.write(f"**Responsable del documento:** {data_files[i][4]}")
+                    st.write(f"**Tamaño del documento:** {data_files[i][2]} MB")
+                    st.write(f"**Fecha de registro:** {data_files[i][3]}")
+                    st.write("")
+                with col_cont2:
+                    if st.button("", key="borrar"+str(i), type="secondary", icon=":material/delete:"):
+                        borrarArchivos(data_files[i][0])
+                        st.rerun()
+
+    # df = pd.DataFrame(data_files, columns = ['ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro'])
+    # df["Seleccionar"] = False
+    # df = df[['Seleccionar', 'ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro']]
+
+    # selected = st.data_editor(
+    #     data = df,
+    #     column_config={
+    #         "Seleccionar": st.column_config.CheckboxColumn(
+    #             "Seleccionar",
+    #             help="Seleccione los documentos que desea eliminar",
+    #             default=False,
+    #         )
+    #     },
+    #     disabled=['ID', 'Nombre de documento', 'Tamaño del documento (MB)', 'Fecha de registro'],
+    #     hide_index=True,
+    #     use_container_width=True
+    # )
 
     #filtramos los usuarios seleccionados
-    st.session_state["uploader_key_other"] = [
-        row["ID"]
-        for idx, row in selected.iterrows()
-        if row["Seleccionar"]
-    ]
+    # st.session_state["uploader_key_other"] = [
+    #     row["ID"]
+    #     for idx, row in selected.iterrows()
+    #     if row["Seleccionar"]
+    # ]
 
 with tab3:
 

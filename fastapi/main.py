@@ -246,37 +246,43 @@ class CargarDocumento(BaseModel):
     contenido: bytes
     filename: str
     current_date: str
+    correo: str
 
 @app.post("/CargarDocumento", status_code=status.HTTP_201_CREATED)
 def cargar_documento(documento: CargarDocumento):
+    cursor.execute("SELECT user_id FROM User WHERE email = %s", (documento.correo,))
+    user = cursor.fetchone()
+
     query = """
-        INSERT INTO File (content, name, register_date, type, active)
-        VALUES (%s, %s, %s, %s, 1)
+        INSERT INTO File (content, name, register_date, type, active, user_id)
+        VALUES (%s, %s, %s, %s, 1, %s)
     """
-    cursor.execute(query, (documento.contenido, documento.filename, documento.current_date, 'DocumentoAdicional'))
+    cursor.execute(query, (documento.contenido, documento.filename, documento.current_date, 'DocumentoAdicional', user[0]))
     conn.commit()
     return cursor.lastrowid
 
 @app.delete("/File/{file_id}", status_code = status.HTTP_200_OK)
 def delete_conversations(file_id: int):
     delete_query = """
-        UPDATE File
-        SET active = 0
+        DELETE FROM File
         WHERE file_id = %s
     """
     cursor.execute(delete_query, (file_id,))
     conn.commit()
+    return 1
 
 @app.get("/File/{document_name}", status_code=status.HTTP_200_OK)
 def get_file(document_name: str):
     select_query = """
         SELECT 
             file_id as 'ID',
-            name as 'Nombre de documento',
+            File.name as 'Nombre de documento',
             ROUND(LENGTH(content) / (1024 * 1024), 2) AS 'Tamaño del documento (MB)',
-            register_date as 'Fecha de registro'
+            register_date as 'Fecha de registro',
+            u.name as 'Autor del documento'
         FROM File
-        WHERE active = 1 AND name LIKE %s
+        INNER JOIN User u ON File.user_id = u.user_id
+        WHERE File.active = 1 AND File.name LIKE %s
     """
     cursor.execute(select_query, (f"%{document_name}%",))
     result = cursor.fetchall()
@@ -287,11 +293,13 @@ def get_file():
     select_query = """
         SELECT 
             file_id as 'ID',
-            name as 'Nombre de documento',
+            File.name as 'Nombre de documento',
             ROUND(LENGTH(content) / (1024 * 1024), 2) AS 'Tamaño del documento (MB)',
-            register_date as 'Fecha de registro'
+            register_date as 'Fecha de registro',
+            u.name as 'Autor del documento'
         FROM File
-        WHERE active = 1
+        INNER JOIN User u ON File.user_id = u.user_id
+        WHERE File.active = 1
     """
     cursor.execute(select_query)
     result = cursor.fetchall()
