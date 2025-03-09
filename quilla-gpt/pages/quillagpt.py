@@ -506,7 +506,7 @@ if st.session_state.feedback_sent:
 @st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
 def config_feedback(message_id):
 #   st.write("Si PandaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.")
-  derivar = st.text_area("**Consulta a derivar al administrador**", placeholder = "Si PandaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.", height=250, max_chars=500)
+  derivar = st.text_area("**Consulta a derivar al administrador**", placeholder = "Si PandaGPT no pudo responder tu consulta especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta por correo electrónico según el contexto brindado.", height=250, max_chars=500)
   col1, col2, col3 = st.columns([5, 2, 2])
   with col2:
     if st.button("Cancelar", type="secondary", use_container_width=True):
@@ -536,7 +536,7 @@ def save_feedback(respuesta):
     st.session_state.message_response_id = None
 
 if st.session_state.feedback_response:
-    cols= st.columns([0.45, 0.6, 10], vertical_alignment="center", gap='small')
+    cols= st.columns([0.5, 0.6, 10], vertical_alignment="center", gap='small')
     with cols[1]:
         feedback = st.feedback("thumbs", key=st.session_state.fbk)
         if feedback is not None:

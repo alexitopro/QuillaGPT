@@ -14,7 +14,27 @@ div[data-testid="stSidebarUserContent"] {
     opacity: 0.5; /* Reducir la opacidad */
 }
 
-.stTabs [role="tab"]:hover {
+.stTabs [role="tab"][aria-selected="true"] {
+    border: 1px solid #00CFB4;
+    color: white;
+    background-color: #00CFB4;
+    border-radius: 8px;
+    padding: 5px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+.stTabs [role="tab"][aria-selected="true"]:hover {
+    border: 1px solid #00CFB4;
+    color: white;
+    background-color: #00CFB4;
+    border-radius: 8px;
+    padding: 5px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+.stTabs [role="tab"][aria-selected="false"]:hover {
     color: #00CFB4 !important;
     border-color: #00CFB4 !important;
 }

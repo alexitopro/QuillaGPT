@@ -106,14 +106,16 @@ if "bandera" not in st.session_state:
 @st.dialog("Detalle de la consulta", width='large')
 def verDetalle(selected_index):
 
-    st.text_input("**Correo del usuario**", value=df.loc[selected_index, "Correo del usuario"], disabled=True)
+    st.text_input("**Fecha de la consulta**", value=data_consulta[selected_index][1], disabled=True)
 
-    st.text_input("**Tema**", value=df.loc[selected_index, "Tema"], disabled=True)
+    st.text_input("**Nombre del usuario**", value=data_consulta[selected_index][3], disabled=True)
 
-    st.text_area("**Consulta**", value=df.loc[selected_index, "Consulta"], disabled=True)
+    st.text_input("**Correo del usuario**", value=data_consulta[selected_index][2], disabled=True)
+
+    st.text_area("**Consulta**", value=data_consulta[selected_index][5], disabled=True)
 
     with st.expander("Contexto", expanded=False):
-        input = {"indice" : int(df.loc[selected_index, "ID"])}
+        input = {"indice" : int(data_consulta[selected_index][0])}
         result = req.get(url="http://127.0.0.1:8000/ObtenerContextoSolicitud", data=json.dumps(input))
         data = result.json()
         cleaned_data = data[0][0].replace("\\n", "\n").strip()
@@ -121,8 +123,8 @@ def verDetalle(selected_index):
         st.text_area("**Context**", value=cleaned_data, disabled=True, label_visibility="collapsed", height=150)
         # st.write(cleaned_data)
 
-    if df.loc[selected_index, "Estado"] == "Resuelta":
-        respuesta = st.text_area("**Respuesta**", value=df.loc[selected_index, "Respuesta"], disabled = True)
+    if data_consulta[selected_index][7] == "Resuelta":
+        respuesta = st.text_area("**Respuesta**", value=data_consulta[selected_index][6], disabled = True)
     else:
         respuesta = st.text_area("**Respuesta**", placeholder="Ingrese la respuesta a la consulta...")
         col1, col2 = st.columns([3, 0.85])
@@ -134,14 +136,14 @@ def verDetalle(selected_index):
 
             if st.button("Guardar cambios", type="primary", key="query_resolved_button", disabled=st.session_state.query_running):
                 
-                input = { "id" : int(df.loc[selected_index, "ID"]), "respuesta" : respuesta }
+                input = { "id" : int(data_consulta[selected_index][0]), "respuesta" : respuesta }
                 req.put(url="http://127.0.0.1:8000/SolicitudResolucion", data = json.dumps(input))
 
                 #subir la respuesta a la base de datos de Pinecone
                 data = {}
-                data['consulta'] = df.loc[selected_index, "Consulta"]
+                data['consulta'] = data_consulta[selected_index][4]
                 data['respuesta'] = respuesta
-                data['id'] = int(df.loc[selected_index, "ID"])
+                data['id'] = int(data_consulta[selected_index][0])
                 data['fuente'] = "Consulta derivada al administrador del banco de consultas de PandaGPT"
                 json_data = json.dumps(data)
                 data_dict = json.loads(json_data)
@@ -150,8 +152,8 @@ def verDetalle(selected_index):
                 gmail_user = os.getenv("GMAIL_USER")
                 gmail_password = os.getenv("GMAIL_PASSWORD")
                 sent_from = gmail_user
-                sent_to = [df.loc[selected_index, "Correo del usuario"]]
-                subject = f"{str(int(df.loc[selected_index, "ID"])).zfill(5)} - Su consulta en PandaGPT ha sido resuelta"
+                sent_to = [data_consulta[selected_index][2]]
+                subject = f"{str(int(data_consulta[selected_index][0])).zfill(5)} - Su consulta en PandaGPT ha sido resuelta"
                 message = f"""
 <!DOCTYPE html>
 <html>
@@ -160,10 +162,10 @@ def verDetalle(selected_index):
 
     <p>Te informamos que tu consulta ha sido resuelta por el administrador <b>{st.session_state.user["name"]}</b>.</p>
 
-    <p><b>ID de la consulta:</b> {str(int(df.loc[selected_index, "ID"])).zfill(5)}<br>
-    <b>Fecha de registro:</b> {df.loc[selected_index, "Fecha de registro"]}<br>
-    <b>Tema:</b> {df.loc[selected_index, "Tema"]}<br>
-    <b>Consulta:</b> {df.loc[selected_index, "Consulta"]}<br>
+    <p><b>ID de la consulta:</b> {str(int(data_consulta[selected_index][0])).zfill(5)}<br>
+    <b>Fecha de registro:</b> {data_consulta[selected_index][1]}<br>
+    <b>Tema:</b> {data_consulta[selected_index][4]}<br>
+    <b>Consulta:</b> {data_consulta[selected_index][5]}<br>
     <b>Respuesta:</b> {respuesta}</p>
 
     <p>Agradecemos tu paciencia y confianza en PandaGPT. Esperamos que la solución brindada haya sido de tu satisfacción.</p>
@@ -219,7 +221,7 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
 container_inicio.write("")
-container_inicio.title("Solicitudes de Soporte")
+container_inicio.title("Solicitudes de Soporte", anchor=False)
 
 result = req.get(url="http://127.0.0.1:8000/ObtenerClasificaciones")
 temas = result.json()
@@ -229,30 +231,45 @@ col1, col2, col3 = st.columns([3, 2, 6], vertical_alignment="bottom")
 with col1:
     tema = st.selectbox("**Tema de consulta**", opciones_temas)
 with col2:
-    estado = st.selectbox("**Estado**", ["Todos", "Pendiente", "Resuelta"])
+    estado = st.selectbox("**Estado**", ["Pendiente", "Resuelta", "Todos"])
 
 #tabla de consultas
 input = {"tema" : tema, "estado" : estado}
 result = req.get(url="http://127.0.0.1:8000/ObtenerSolicitudesSoporte", data=json.dumps(input))
-data = result.json()
-df = pd.DataFrame(data, columns=["ID", "Fecha de registro", "Correo del usuario", "Tema", "Consulta", "Respuesta", "Estado"])
-df['Fecha de registro'] = pd.to_datetime(df['Fecha de registro'], format="%Y-%m-%d")
-df['Fecha de registro'] = df['Fecha de registro'].dt.strftime("%d/%m/%Y")
+data_consulta = result.json()
 
-event = st.dataframe(
-    df,
-    on_select="rerun",
-    selection_mode=["single-row"],
-    hide_index=True,
-    key = str(st.session_state.tabla_id),
-    use_container_width=True
-)
+for i in range(len(data_consulta)):
+    with st.container(border=True, key="container"+str(i)):
+        col_cont1, col_cont2 = st.columns([3, 1], vertical_alignment
+        ="center")
+        with col_cont1:
+            st.subheader(data_consulta[i][5], anchor=False)
+            st.write(f"**Realizado por el usuario:** {data_consulta[i][3]}")
+            st.write(f"**Fecha de consulta:** {data_consulta[i][1]}")
+            st.write(f"**Estado:** {data_consulta[i][7]}")
+            st.write("")
+        with col_cont2:
+            if st.button("Responder", key="editar"+str(i), type="secondary", icon=":material/reply:"):
+                verDetalle(i)
 
-if event.selection is not None:
-    if event.selection['rows']:
-        selected_index = event.selection['rows'][0]
-        # value_a = df.loc[selected_index, 'a']
-        verDetalle(selected_index)
+# df = pd.DataFrame(data, columns=["ID", "Fecha de registro", "Correo del usuario", "Tema", "Consulta", "Respuesta", "Estado"])
+# df['Fecha de registro'] = pd.to_datetime(df['Fecha de registro'], format="%Y-%m-%d")
+# df['Fecha de registro'] = df['Fecha de registro'].dt.strftime("%d/%m/%Y")
+
+# event = st.dataframe(
+#     df,
+#     on_select="rerun",
+#     selection_mode=["single-row"],
+#     hide_index=True,
+#     key = str(st.session_state.tabla_id),
+#     use_container_width=True
+# )
+
+# if event.selection is not None:
+#     if event.selection['rows']:
+#         selected_index = event.selection['rows'][0]
+#         # value_a = df.loc[selected_index, 'a']
+#         verDetalle(selected_index)
 
 obtenerContador = req.get(url="http://127.0.0.1:8000/ObtenerContadorSolicitudes")
 contadorRequests = obtenerContador.json()

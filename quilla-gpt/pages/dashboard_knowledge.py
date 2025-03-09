@@ -181,7 +181,7 @@ with tab2:
         st.session_state["documents"] = []
 
     #cargar archivos adicionales
-    document =  st.file_uploader("**Cargar documento adicional**", type=["pdf"], key=st.session_state["uploader_key_other"])
+    document =  st.file_uploader("**Cargar documento digital**", type=["pdf"], key=st.session_state["uploader_key_other"])
 
     if document is not None and document.name not in st.session_state["documents"]:
         bytes_content = document.getvalue()
@@ -361,14 +361,19 @@ with tab3:
 
         for fecha, instrucciones in instrucciones_por_fecha.items():
             with st.expander(f"Instrucciones del {fecha}", expanded=False):
-                df = pd.DataFrame(
-                    [
-                        {"Instrucción": instruccion[0], 
-                         "Registrado por": instruccion[2]}
-                        for instruccion in instrucciones
-                    ]
-                )
-                st.table(df)
+                # df = pd.DataFrame(
+                #     [
+                #         {"Instrucción": instruccion[0], 
+                #          "Registrado por": instruccion[3]}
+                #         for instruccion in instrucciones
+                #     ]
+                # )
+                # st.table(df)
+                for instruccion in instrucciones:
+                    with st.container(border=True):
+                        st.write(f"**Instrucción:** {instruccion[0]}")
+                        st.write(f"**Registrado por:** {instruccion[3]}")
+                        st.write(f"**Correo del usuario:** {instruccion[2]}") 
     else:
         st.caption("No hay instrucciones personalizadas anteriores registradas")
 

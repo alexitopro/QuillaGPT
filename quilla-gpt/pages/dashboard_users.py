@@ -157,7 +157,7 @@ st.markdown("""
     div[data-testid="stTextInput"] input {
         padding-right: 35px;
     }
-    div[data-testid="stTextInput"]::after {
+    div[class*="st-key-usuario_buscador"] div[data-testid="stTextInput"]::after {
         content: "search";
         font-family: 'Material Symbols Outlined';
         font-size: 20px;
@@ -171,15 +171,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 #contenido
-col1, col2, col3 = st.columns([2.5, 1.5, 1], vertical_alignment="bottom")
+col1, col2, col3 = st.columns([1.5, 0.5, 3], vertical_alignment="bottom")
 with col1:
-    usuario = st.text_input("**Buscar usuario**", placeholder="Ingrese el correo del usuario", max_chars=50)
+    usuario = st.text_input("**Buscar usuario**", placeholder="Ingrese el correo del usuario", max_chars=50, key="usuario_buscador")
 with col2:
     rol = st.selectbox("**Rol**", ["Todos", "Administrador", "Estudiante"])
-with col3:
-    estado = st.selectbox("**Estado**", ["Todos", "Activo", "Inactivo"])
+# with col3:
+#     estado = st.selectbox("**Estado**", ["Todos", "Activo", "Inactivo"])
 
-input = {"email" : usuario, "rol" : rol, "estado" : estado}
+input = {"email" : usuario, "rol" : rol, "estado" : "Activo"}
 result = req.get(url="http://127.0.0.1:8000/ObtenerUsuarios", data = json.dumps(input))
 data = result.json()
 
@@ -191,7 +191,6 @@ for i in range(len(data)):
             st.subheader(data[i][1], anchor=False)
             st.write(f"**Correo electrónico:** {data[i][2]}")
             st.write(f"**Rol:** {data[i][3]}")
-            st.write(f"**Estado:** {data[i][4]}")
             st.write("")
         with col_cont2:
             if st.button("", key="editar"+str(i), type="secondary", icon=":material/edit:"):

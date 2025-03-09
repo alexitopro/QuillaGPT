@@ -315,7 +315,7 @@ def get_custom_instruction():
 @app.get("/ListarInstruccionesInactivas", status_code=status.HTTP_200_OK)
 def list_custom_instruction():
     select_query = """
-        SELECT instruction, register_date, User.email
+        SELECT instruction, register_date, User.email, User.name
         FROM CustomInstruction
         INNER JOIN User ON CustomInstruction.user_id = User.user_id
         WHERE CustomInstruction.active = 0 
@@ -380,7 +380,7 @@ class SolicitudesSoporte(BaseModel):
 @app.get("/ObtenerSolicitudesSoporte", status_code=status.HTTP_200_OK)
 def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
     query = """
-        SELECT request_query_id, register_date, u.email, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
+        SELECT request_query_id, register_date, u.email, u.name, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
         FROM RequestQuery r
         JOIN User u ON r.user_id = u.user_id
         WHERE r.active = 1 
