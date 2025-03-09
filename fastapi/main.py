@@ -27,11 +27,12 @@ def get_user_by_email(user_email: str):
     
 class User(BaseModel):
     email: str
+    name: str
 
 @app.post("/User", status_code = status.HTTP_201_CREATED)
 def create_user(user: User):
-    insert_query = "INSERT INTO User (role_id, email, active) VALUES (2, %s, 1)"
-    cursor.execute(insert_query, (user.email,))
+    insert_query = "INSERT INTO User (role_id, email, name, active) VALUES (2, %s, %s, 1)"
+    cursor.execute(insert_query, (user.email, user.name))
     conn.commit()
     return user
 
@@ -159,7 +160,7 @@ def request_query(enviar_feedback: EnviarFeedback):
                 )
                 AND message_id <= %s
                 ORDER BY timestamp DESC
-                LIMIT 5
+                LIMIT 2
             ) AS last_messages
         ),
         1)
@@ -206,6 +207,7 @@ def get_users(usuario: ObtenerUsuarios):
     query = """
         SELECT 
             u.user_id AS 'ID',
+            u.name AS 'Nombre de usuario',
             u.email AS 'Correo electrónico', 
             r.name AS 'Rol', 
             CASE WHEN u.active = 1 THEN 'Activo' ELSE 'Inactivo' END AS 'Estado'
@@ -351,6 +353,17 @@ def get_request_query_classifications():
     cursor.execute(select_query)
     result = cursor.fetchall()
     return result
+
+@app.get("/ObtenerContadorSolicitudes", status_code=status.HTTP_200_OK)
+def get_obtener_contador_solicitudes():
+    select_query = """
+        SELECT COUNT(*)
+        FROM RequestQuery
+        WHERE active = 1 AND resolved = 0
+    """
+    cursor.execute(select_query)
+    result = cursor.fetchone()
+    return result[0]
 
 class SolicitudesSoporte(BaseModel):
     tema: str

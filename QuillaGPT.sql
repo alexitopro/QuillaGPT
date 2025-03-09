@@ -38,6 +38,7 @@ CREATE TABLE `Message` (
 
 CREATE TABLE `User` (
   `user_id` integer PRIMARY KEY AUTO_INCREMENT,
+  `name` varchar(255),
   `role_id` integer,
   `email` varchar(255),
   `active` bool
@@ -95,9 +96,9 @@ ALTER TABLE `SessionClassification` ADD FOREIGN KEY (`session_id`) REFERENCES `S
 ALTER TABLE `RequestQuery` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
 ALTER TABLE `CustomInstruction` ADD FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`);
 
-INSERT INTO `User` (`role_id`, `email`, `active`) 
+INSERT INTO `User` (`role_id`, `name`, `email`, `active`) 
 VALUES 
-(1, 'alex.pan@pucp.edu.pe', true);
+(1, 'ALEX PAN LI', 'alex.pan@pucp.edu.pe', true);
 -- INSERT INTO `CustomInstruction` (`instruction`, `active`)
 -- VALUES 
 -- ('Te llamas QuillaGPT y ayudas sobre procesos académico-administrativos de la PUCP. Si encuentras información sobre el proceso académico-administrativo consultado por el usuario, tienes que explicar de manera simple pero detallada el procedimiento o los pasos que tiene que hacer. Lo siguiente que debes hacer es mencionar la fuente de donde has sacado la información. La fuente lo sacas según el link anexado (si es que el link se encuentra añadido a la información) y en los casos particulares que la información extraída fue sacada de un documento entonces debes mencionar el nombre del documento del cual has sacado información. Asimismo, menciona que si la información recogida no tiene relación con la consulta del estudiante, si el estudiante lo desea, puede realizar la derivación de la consulta con el administrador dando clic al pulgar abajo al mensaje.', true);

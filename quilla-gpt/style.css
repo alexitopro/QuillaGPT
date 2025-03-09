@@ -10,6 +10,19 @@ div[data-testid="stSidebarUserContent"] {
     padding-top: 1rem;
 }
 
+.stTabs [role="tab"][aria-selected="false"] {
+    opacity: 0.5; /* Reducir la opacidad */
+}
+
+.stTabs [role="tab"]:hover {
+    color: #00CFB4 !important;
+    border-color: #00CFB4 !important;
+}
+
+div[data-testid="InputInstructions"] > span:nth-child(1) {
+    visibility: hidden;
+}
+
 /* Apple Bubble Chat CSS */
 .chat-row {
     display: flex;
@@ -82,64 +95,7 @@ div[data-testid="stSidebarUserContent"] {
     font-size: large;
 }
 
-/* .element-container:has(style){
-    display: none;
+/* Tamanio para los tabs */
+.st-emotion-cache-wq5ihp {
+    font-size: large;
 }
-#button-logout {
-    display: none;
-}
-#button-indicadores {
-    display: none;
-}
-.element-container:has(#button-logout) {
-    display: none;
-}
-.element-container:has(#button-indicadores) {
-    display: none;
-}
-.element-container:has(#button-logout) + div button {
-    color: #F24B4B;
-    border-color: #F24B4B;
-}
-.element-container:has(#button-indicadores) + div button {
-    color: white;
-    border-color: black;
-}
-.element-container:has(#button-logout) + div button:active,
-.element-container:has(#button-logout) + div button:focus {
-    background-color: #F24B4B;
-    color: white;
-}
-.element-container:has(#button-indicadores) + div button:active,
-.element-container:has(#button-indicadores) + div button:focus {
-    background-color: black;
-    color: white;
-} */
-
-/* button[class*="logout"] {
-    color: #F24B4B;
-    border-color: #F24B4B;
-} */
-
-/* button[kind="secondary"] {
-    background-color: black;
-    color: white;
-}
-
-button[kind="secondary"]:hover {
-    background-color: black;
-    color: white;
-    border-color: black;
-}
-
-button[kind="secondary"]:active {
-    background-color: black;
-    color: white;
-    border-color: black;
-} */
-
-/* button[kind="secondary"]:active {
-    background-color: #F24B4B;
-    color: white;
-    border-color: #F24B4B
-} */

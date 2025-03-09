@@ -166,6 +166,18 @@ if len(date_picker) == 2:
 else:
     st.caption("Por favor, selecciona un rango de fecha apropiado para visualizar los indicadores.")
 
+obtenerContador = req.get(url="http://127.0.0.1:8000/ObtenerContadorSolicitudes")
+contadorRequests = obtenerContador.json()
+
+if "support_requests" not in st.session_state:
+    st.session_state.support_requests = contadorRequests
+else:
+    st.session_state.support_requests = contadorRequests
+
+button_text = "Solicitudes de Soporte"
+if st.session_state.support_requests > 0:
+    button_text += f" ({st.session_state.support_requests})"
+
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
     
@@ -177,7 +189,7 @@ with st.sidebar:
     if st.button("Gestión del Conocimiento", use_container_width=True, icon=":material/description:", type="secondary"):
         st.switch_page("./pages/dashboard_knowledge.py")
 
-    if st.button("Solicitudes de Soporte", use_container_width=True, icon=":material/question_answer:", type="secondary"):
+    if st.button(button_text, use_container_width=True, icon=":material/question_answer:", type="secondary"):
         st.switch_page("./pages/dashboard_queries.py")
 
-    st.button("Reporte de Indicadores", use_container_width=True, icon=":material/bar_chart:", disabled=True)
+    st.button("Reporte de Indicadores", use_container_width=True, icon=":material/bar_chart:", type="primary")

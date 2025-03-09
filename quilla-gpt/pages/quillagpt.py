@@ -505,8 +505,8 @@ if st.session_state.feedback_sent:
 
 @st.dialog("¿La respuesta brindada no fue de tu satisfacción?")
 def config_feedback(message_id):
-  st.write("Si PandaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.")
-  derivar = st.text_area("**Consulta a derivar al administrador**", height=250, max_chars=500, placeholder="Escribe aquí tu consulta...")
+#   st.write("Si PandaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.")
+  derivar = st.text_area("**Consulta a derivar al administrador**", placeholder = "Si PandaGPT no pudo responder tu consulta, indícalo en el recuadro de abajo para derivarla al administrador. Para una mejor asistencia, especifica el procedimiento de interés y detalla tu consulta. Esto permitirá al administrador ofrecerte una respuesta más precisa según el contexto.", height=250, max_chars=500)
   col1, col2, col3 = st.columns([5, 2, 2])
   with col2:
     if st.button("Cancelar", type="secondary", use_container_width=True):

@@ -148,11 +148,17 @@ with col3:
 input = {"email" : usuario, "rol" : rol, "estado" : estado}
 result = req.get(url="http://127.0.0.1:8000/ObtenerUsuarios", data = json.dumps(input))
 data = result.json()
-df = pd.DataFrame(data, columns=["ID", "Correo electrónico", "Rol", "Estado"])
+
+# for i in range(len(data)):
+#     with st.container(border=True, key="container"+str(i)):
+#         st.subheader(f"Usuario {i+1}")
+
+df = pd.DataFrame(data, columns=["ID", "Nombre de usuario", "Correo electrónico", "Rol", "Estado"])
 
 event = st.dataframe(
     df,
     on_select="rerun",
+    column_order=["Nombre de usuario", "Correo electrónico", "Rol", "Estado"],
     selection_mode=["single-row"],
     hide_index=True,
     key = str(st.session_state.tabla_id),
@@ -164,8 +170,20 @@ if event.selection is not None:
         selected_index = event.selection['rows'][0]
         verDetalle(selected_index)
 
+obtenerContador = req.get(url="http://127.0.0.1:8000/ObtenerContadorSolicitudes")
+contadorRequests = obtenerContador.json()
+
+if "support_requests" not in st.session_state:
+    st.session_state.support_requests = contadorRequests
+else:
+    st.session_state.support_requests = contadorRequests
+
+button_text = "Solicitudes de Soporte"
+if st.session_state.support_requests > 0:
+    button_text += f" ({st.session_state.support_requests})"
+
 with st.sidebar:
-    # st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+
     st.markdown(
         f"""
         <h1 style="color:#00205B;">Bienvenido, {st.session_state["username"]}!</h1>
@@ -175,12 +193,12 @@ with st.sidebar:
     
     st.write("")
 
-    st.button("Gestión de Usuarios", use_container_width=True, icon=":material/group:", disabled=True)
+    st.button("Gestión de Usuarios", use_container_width=True, icon=":material/group:", type="primary")
 
     if st.button("Gestión del Conocimiento", use_container_width=True, type="secondary", icon=":material/description:"):
         st.switch_page("./pages/dashboard_knowledge.py")
 
-    if st.button("Solicitudes de Soporte", use_container_width=True, type="secondary", icon=":material/question_answer:"):
+    if st.button(button_text, use_container_width=True, type="secondary", icon=":material/question_answer:"):
         st.switch_page("./pages/dashboard_queries.py")
 
     if st.button("Reporte de Indicadores", use_container_width=True, type="secondary", icon=":material/bar_chart:"):

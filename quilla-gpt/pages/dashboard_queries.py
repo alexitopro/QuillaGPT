@@ -221,8 +221,6 @@ container_inicio.write("")
 container_inicio.write("")
 container_inicio.title("Solicitudes de Soporte")
 
-# st.write(st.session_state.user["name"])
-
 result = req.get(url="http://127.0.0.1:8000/ObtenerClasificaciones")
 temas = result.json()
 opciones_temas = ["Todos"] + [tema[0] for tema in temas]
@@ -256,6 +254,18 @@ if event.selection is not None:
         # value_a = df.loc[selected_index, 'a']
         verDetalle(selected_index)
 
+obtenerContador = req.get(url="http://127.0.0.1:8000/ObtenerContadorSolicitudes")
+contadorRequests = obtenerContador.json()
+
+if "support_requests" not in st.session_state:
+    st.session_state.support_requests = contadorRequests
+else:
+    st.session_state.support_requests = contadorRequests
+
+button_text = "Solicitudes de Soporte"
+if st.session_state.support_requests > 0:
+    button_text += f" ({st.session_state.support_requests})"
+
 with st.sidebar:
     st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
     st.write("")
@@ -266,7 +276,7 @@ with st.sidebar:
     if st.button("Gestión del Conocimiento", use_container_width=True, icon=":material/description:", type="secondary"):
         st.switch_page("./pages/dashboard_knowledge.py")
 
-    st.button("Solicitudes de Soporte", use_container_width=True, icon=":material/question_answer:", disabled=True)
+    st.button(button_text, use_container_width=True, icon=":material/question_answer:", type="primary")
 
     if st.button("Reporte de Indicadores", use_container_width=True, icon=":material/bar_chart:", type="secondary"):
         st.switch_page("./pages/dashboard_report.py")

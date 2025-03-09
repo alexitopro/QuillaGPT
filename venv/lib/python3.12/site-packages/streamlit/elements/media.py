@@ -1,4 +1,4 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2024)
+# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2025)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import io
 import re
 from datetime import timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Final, Union, cast
+from typing import TYPE_CHECKING, Final, Union, cast
 
 from typing_extensions import TypeAlias
 
@@ -54,7 +54,7 @@ MediaData: TypeAlias = Union[
 ]
 
 SubtitleData: TypeAlias = Union[
-    str, Path, bytes, io.BytesIO, Dict[str, Union[str, Path, bytes, io.BytesIO]], None
+    str, Path, bytes, io.BytesIO, dict[str, Union[str, Path, bytes, io.BytesIO]], None
 ]
 
 MediaTime: TypeAlias = Union[int, float, timedelta, str]
@@ -103,7 +103,8 @@ class MediaMixin:
 
         format : str
             The MIME type for the audio file. This defaults to ``"audio/wav"``.
-            For more information, see https://tools.ietf.org/html/rfc4281.
+            For more information about MIME types, see
+            https://www.iana.org/assignments/media-types/media-types.xhtml.
 
         start_time: int, float, timedelta, str, or None
             The time from which the element should start playing. This can be
@@ -238,7 +239,8 @@ class MediaMixin:
 
         format : str
             The MIME type for the video file. This defaults to ``"video/mp4"``.
-            For more information, see https://tools.ietf.org/html/rfc4281.
+            For more information about MIME types, see
+            https://www.iana.org/assignments/media-types/media-types.xhtml.
 
         start_time: int, float, timedelta, str, or None
             The time from which the element should start playing. This can be

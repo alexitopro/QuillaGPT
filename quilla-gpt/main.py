@@ -38,6 +38,7 @@ conn = pymysql.connect(
 )
 
 def login_callback():
+    
     credentials = flow.run_local_server(
         port=9000,
         open_browser=True,
@@ -93,21 +94,7 @@ if not st.session_state.user:
             st.button("Iniciar sesión con Google", type = 'secondary', icon=':material/login:', use_container_width = True, on_click=login_callback)
 
     with col3:
-        # file_ = open("./static/animacion_main.gif", "rb")
-        # contents = file_.read()
-        # data_url = base64.b64encode(contents).decode("utf-8")
-        # file_.close()
-
-        # st.markdown(
-        #     f"""
-        #     <div style="text-align: center;">
-        #         <img src="data:image/gif;base64,{data_url}" style="width: 85%;">
-        #     </div>
-        #     """,
-        #     unsafe_allow_html=True,
-        # )
-
-        file_ = open("./static/animation_main.webm", "rb")
+        file_ = open("./static/Inicio Animation.webm", "rb")
         contents = file_.read()
         data_url = base64.b64encode(contents).decode("utf-8")
         file_.close()
@@ -130,12 +117,13 @@ result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user["email"]}")
 if result.status_code == 200:
     if result.json() != -1:
         print("Se procede a iniciar sesión con el rol del usuario")
-        st.session_state.role_id = result.json()[1]
+        st.session_state.role_id = result.json()[2]
         st.session_state["username"] = st.session_state.user["given_name"]
+        print(st.session_state.user)
         st.switch_page('./pages/quillagpt.py')
     else:
         print("Se procede a crear un nuevo usuario con rol de estudiante")
-        input = {"email" : st.session_state.user["email"]}
+        input = {"email" : st.session_state.user["email"], "name": st.session_state.user["name"]}
         result = req.post(url="http://127.0.0.1:8000/User", data = json.dumps(input))
         st.session_state.role_id = 2
         st.session_state["username"] = st.session_state.user["given_name"]
