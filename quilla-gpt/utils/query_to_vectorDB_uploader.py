@@ -16,7 +16,7 @@ def create_query_embedding(arch_json):
     texts = [arch_json['consulta']]
     def crear_embeddings_openai(textos):
         response = openai.embeddings.create(
-            model="text-embedding-3-small",
+            model="text-embedding-3-large",
             input=textos
         )
         return [embedding.embedding for embedding in response.data]
@@ -28,7 +28,7 @@ def create_query_embedding(arch_json):
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 1536,  #dimensiones del modelo a utilizar
+            dimension = 3072,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )

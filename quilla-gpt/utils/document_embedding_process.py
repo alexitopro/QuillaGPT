@@ -13,7 +13,7 @@ def pinecone_init(index_name):
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 1536,  #dimensiones del modelo a utilizar
+            dimension = 3072,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )
@@ -38,7 +38,7 @@ def procesar_arch_pdf(arch):
     #efectuar el chunking del texto
     #chunk size es cuanto texto tiene cada fragmento
     #chunk overlap es cuanto texto se comparte entre fragmentos consecutivos
-    splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap = 100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size = 1050, chunk_overlap = 160)
     documentos = splitter.split_documents(data)
 
     #preprocesar cada fragmento y agregar la fuente
@@ -54,7 +54,7 @@ def crear_embeddings(textos):
     text_list = [item['text'] for item in textos]
     #generar embeddings con open ai
     response = openai.embeddings.create(
-        model="text-embedding-3-small",
+        model="text-embedding-3-large",
         input=text_list
     )
     return [embedding.embedding for embedding in response.data]

@@ -30,7 +30,7 @@ def create_web_scraping_embeddings():
 
     def get_embeddings(texts):
         response = openai.embeddings.create(
-            model="text-embedding-3-small",
+            model="text-embedding-3-large",
             input=texts
         )
         return [embedding.embedding for embedding in response.data]
@@ -42,7 +42,7 @@ def create_web_scraping_embeddings():
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 1536,  #dimensiones del modelo a utilizar
+            dimension = 3072,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )

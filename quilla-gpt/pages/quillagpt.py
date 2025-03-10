@@ -101,7 +101,7 @@ def inicializar_pinecone():
     if not pc.has_index(index_name):
         pc.create_index(
             name = index_name,
-            dimension = 1536,  #dimensiones del modelo a utilizar
+            dimension = 3072,  #dimensiones del modelo a utilizar
             metric = "cosine",
             spec = ServerlessSpec(cloud="aws", region="us-east-1")
         )
@@ -387,7 +387,7 @@ else:
 
                 historial_conversacion += f"user: {prompt}\n"
                 response = openai.embeddings.create(
-                    model="text-embedding-3-small",
+                    model="text-embedding-3-large",
                     input=historial_conversacion
                 )
 
