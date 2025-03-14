@@ -10,7 +10,6 @@ import requests as req
 import json
 from streamlit_lottie import st_lottie_spinner
 from uuid import uuid4
-import time
 from PIL import Image
 from io import BytesIO
 

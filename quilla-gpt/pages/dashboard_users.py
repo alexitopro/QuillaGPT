@@ -2,7 +2,6 @@ import streamlit as st
 from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
-import pandas as pd
 from PIL import Image
 from io import BytesIO
 
@@ -171,7 +170,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 #contenido
-col1, col2, col3 = st.columns([1.5, 0.5, 3], vertical_alignment="bottom")
+col1, col2, col3 = st.columns([1.5, 1, 3], vertical_alignment="bottom")
 with col1:
     usuario = st.text_input("**Buscar usuario**", placeholder="Ingrese el correo del usuario", max_chars=50, key="usuario_buscador")
 with col2:

@@ -3,10 +3,7 @@ from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
 from utils.query_to_vectorDB_uploader import create_query_embedding
-import hashlib
-import time
 import pandas as pd
-import plotly.express as px
 import datetime
 from PIL import Image
 from io import BytesIO
@@ -14,7 +11,7 @@ from io import BytesIO
 #BARRA DE NAVEGACION
 styles = {
     "nav": {
-        "background-color": "#31333F",
+        "background-color": "#00205B",
         "justify-content": "space-between"
     },
     "div": {
@@ -106,7 +103,7 @@ container_inicio.title("Reporte de Indicadores", anchor=False)
 
 hoy = datetime.date.today()
 primer_dia = hoy.replace(day=1)
-col1, col2 = st.columns([1, 5])
+col1, col2 = st.columns([1.25, 5])
 with col1:
     date_picker = st.date_input("**Rango de fecha de análisis**", (primer_dia, "today"), format="DD/MM/YYYY")
 

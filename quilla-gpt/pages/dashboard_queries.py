@@ -2,7 +2,6 @@ import streamlit as st
 from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
-import pandas as pd
 from utils.query_to_vectorDB_uploader import create_query_embedding
 import os
 from email.mime.multipart import MIMEMultipart

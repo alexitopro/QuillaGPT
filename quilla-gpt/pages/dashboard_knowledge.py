@@ -2,7 +2,6 @@ import streamlit as st
 from streamlit_navigation_bar import st_navbar
 import requests as req
 import json
-import pandas as pd
 from datetime import datetime
 from utils.document_embedding_process import procesar_arch_db
 from utils.document_vectordb_deletion import eliminar_arch_db
@@ -327,6 +326,7 @@ with tab3:
 
     def save_instructions(instrucciones):
         if not st.session_state["disabled"]:
+            req.put(url = "http://127.0.0.1:8000/ActualizarInstrucciones")
             input = {"instruccion" : instrucciones, "correo" : st.session_state.user["email"]}
             print(input)
             req.post(url = "http://127.0.0.1:8000/CustomInstruction", data = json.dumps(input))

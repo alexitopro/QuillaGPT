@@ -5,21 +5,26 @@ import os
 from datetime import datetime
 from typing import Optional
 
-conn = pymysql.connect(
-    host=os.getenv("MYSQL_HOST"),
-    user=os.getenv("MYSQL_USER"),
-    password=os.getenv("MYSQL_PASSWORD"),
-    database=os.getenv("MYSQL_DB")
-)
-cursor = conn.cursor()
+def get_db_connection():
+    conn = pymysql.connect(
+        host=os.getenv("MYSQL_HOST"),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database=os.getenv("MYSQL_DB")
+    )
+    return conn
 
 app = FastAPI()
 
 @app.get("/User/{user_email}", status_code = status.HTTP_200_OK)
 def get_user_by_email(user_email: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = "SELECT * FROM User WHERE email = %s"
     cursor.execute(select_query, (user_email,))
     result = cursor.fetchone()
+    cursor.close()
+    conn.close()
     if result:
         return result
     else:
@@ -31,13 +36,19 @@ class User(BaseModel):
 
 @app.post("/User", status_code = status.HTTP_201_CREATED)
 def create_user(user: User):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     insert_query = "INSERT INTO User (role_id, email, name, active) VALUES (2, %s, %s, 1)"
     cursor.execute(insert_query, (user.email, user.name))
     conn.commit()
+    cursor.close()
+    conn.close()
     return user
 
 @app.delete("/Session/{username}", status_code = status.HTTP_200_OK)
 def delete_conversations(username: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     delete_query = """
         UPDATE Session
         SET active = 0
@@ -45,10 +56,14 @@ def delete_conversations(username: str):
     """
     cursor.execute(delete_query, (username,))
     conn.commit()
+    cursor.close()
+    conn.close()
     return username
 
 @app.get("/Session/ObtenerSesionesUsuario/{user_email}", status_code=status.HTTP_200_OK)
 def get_sesiones_usuario(user_email: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT title, session_id
         FROM Session s
@@ -58,10 +73,14 @@ def get_sesiones_usuario(user_email: str):
     """
     cursor.execute(select_query, (user_email,))
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/Message/ObtenerMensajesSesion/{session_id}", status_code=status.HTTP_200_OK)
 def get_mensajes_sesion(session_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT role, content
         FROM Message
@@ -69,6 +88,8 @@ def get_mensajes_sesion(session_id: int):
     """
     cursor.execute(select_query, (session_id,))
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 class Session(BaseModel):
@@ -77,12 +98,16 @@ class Session(BaseModel):
 
 @app.post("/Session", status_code=status.HTTP_201_CREATED)
 def create_session(session: Session):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         INSERT INTO Session (start_session, user_id, title, active)
         VALUES (%s, %s, %s, 1)
     """
     cursor.execute(query, (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), session.user_id, session.titulo))
     conn.commit()
+    cursor.close()
+    conn.close()
     return cursor.lastrowid
 
 class Message(BaseModel):
@@ -93,6 +118,8 @@ class Message(BaseModel):
 
 @app.post("/Message", status_code=status.HTTP_201_CREATED)
 def create_message(message: Message):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     if message.classification == "-1":
         query = """
             INSERT INTO Message (session_id, timestamp, register_date, role, content, active)
@@ -106,6 +133,8 @@ def create_message(message: Message):
         """
         cursor.execute(query, (message.session_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), datetime.now().strftime('%y-%m-%d'), message.role, message.content, message.classification))
     conn.commit()
+    cursor.close()
+    conn.close()
     return cursor.lastrowid
 
 class SessionClassification(BaseModel):
@@ -114,6 +143,8 @@ class SessionClassification(BaseModel):
 
 @app.post("/SessionClassification", status_code=status.HTTP_201_CREATED)
 def classify_session(session_classification: SessionClassification):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         INSERT INTO SessionClassification (timestamp, session_id, classification, active)
         VALUES (%s, %s, %s, 1)
@@ -129,6 +160,8 @@ def classify_session(session_classification: SessionClassification):
         )
     )
     conn.commit()
+    cursor.close()
+    conn.close()
     return cursor.lastrowid
 
 class EnviarFeedback(BaseModel):
@@ -138,6 +171,8 @@ class EnviarFeedback(BaseModel):
 
 @app.post("/RequestQuery", status_code=status.HTTP_201_CREATED)
 def request_query(enviar_feedback: EnviarFeedback):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute("SET SESSION group_concat_max_len = 100000")
     query = """
         INSERT INTO RequestQuery (query, register_date, classification, resolved, user_id, context, active)
@@ -167,6 +202,8 @@ def request_query(enviar_feedback: EnviarFeedback):
     """
     cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id, enviar_feedback.message_id))
     conn.commit()
+    cursor.close()
+    conn.close()
 
 class ActualizarDerivado(BaseModel):
     message_id: int
@@ -174,6 +211,8 @@ class ActualizarDerivado(BaseModel):
 
 @app.put("/ActualizarDerivado", status_code=status.HTTP_200_OK)
 def actualizar_derivado(actualizar_derivado: ActualizarDerivado):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         UPDATE Message
         SET derived = %s
@@ -182,6 +221,8 @@ def actualizar_derivado(actualizar_derivado: ActualizarDerivado):
     """
     cursor.execute(query, (actualizar_derivado.derivado, actualizar_derivado.message_id,))
     conn.commit()
+    cursor.close()
+    conn.close()
 
 class ActualizarFeedback(BaseModel):
     positivo: int
@@ -189,6 +230,8 @@ class ActualizarFeedback(BaseModel):
 
 @app.put("/ActualizarFeedback", status_code=status.HTTP_200_OK)
 def actualizar_feedback(actualizar_feedback: ActualizarFeedback):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         UPDATE Message
         SET positive = %s
@@ -196,6 +239,8 @@ def actualizar_feedback(actualizar_feedback: ActualizarFeedback):
     """
     cursor.execute(query, (actualizar_feedback.positivo, actualizar_feedback.message_id,))
     conn.commit()
+    cursor.close()
+    conn.close()
 
 class ObtenerUsuarios(BaseModel):
     rol: str
@@ -204,6 +249,8 @@ class ObtenerUsuarios(BaseModel):
 
 @app.get("/ObtenerUsuarios", status_code=status.HTTP_200_OK)
 def get_users(usuario: ObtenerUsuarios):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT 
             u.user_id AS 'ID',
@@ -225,6 +272,8 @@ def get_users(usuario: ObtenerUsuarios):
     )
     cursor.execute(query, values)
     data = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return data
 
 class CambiarRolUsuario(BaseModel):
@@ -233,6 +282,8 @@ class CambiarRolUsuario(BaseModel):
 
 @app.put("/User/CambiarRolUsuario", status_code=status.HTTP_200_OK)
 def cambiarRolUsuario(usuario: CambiarRolUsuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         UPDATE User 
         SET role_id = %s 
@@ -241,6 +292,8 @@ def cambiarRolUsuario(usuario: CambiarRolUsuario):
     """
     cursor.execute(query, (1 if usuario.rol == "Administrador" else 2, usuario.email))
     conn.commit()
+    cursor.close()
+    conn.close()
 
 class CargarDocumento(BaseModel):
     contenido: bytes
@@ -250,6 +303,8 @@ class CargarDocumento(BaseModel):
 
 @app.post("/CargarDocumento", status_code=status.HTTP_201_CREATED)
 def cargar_documento(documento: CargarDocumento):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     cursor.execute("SELECT user_id FROM User WHERE email = %s", (documento.correo,))
     user = cursor.fetchone()
 
@@ -259,20 +314,28 @@ def cargar_documento(documento: CargarDocumento):
     """
     cursor.execute(query, (documento.contenido, documento.filename, documento.current_date, 'DocumentoAdicional', user[0]))
     conn.commit()
+    cursor.close()
+    conn.close()
     return cursor.lastrowid
 
 @app.delete("/File/{file_id}", status_code = status.HTTP_200_OK)
 def delete_conversations(file_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     delete_query = """
         DELETE FROM File
         WHERE file_id = %s
     """
     cursor.execute(delete_query, (file_id,))
     conn.commit()
+    cursor.close()
+    conn.close()
     return 1
 
 @app.get("/File/{document_name}", status_code=status.HTTP_200_OK)
 def get_file(document_name: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT 
             file_id as 'ID',
@@ -286,10 +349,14 @@ def get_file(document_name: str):
     """
     cursor.execute(select_query, (f"%{document_name}%",))
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/File/", status_code=status.HTTP_200_OK)
 def get_file():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT 
             file_id as 'ID',
@@ -303,17 +370,25 @@ def get_file():
     """
     cursor.execute(select_query)
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/CustomInstruction/", status_code=status.HTTP_200_OK)
 def get_custom_instruction():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = "SELECT instruction FROM CustomInstruction WHERE active = 1"
     cursor.execute(select_query)
     result = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/ListarInstruccionesInactivas", status_code=status.HTTP_200_OK)
 def list_custom_instruction():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT instruction, register_date, User.email, User.name
         FROM CustomInstruction
@@ -323,7 +398,23 @@ def list_custom_instruction():
     """
     cursor.execute(select_query)
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
+
+@app.put("/ActualizarInstrucciones", status_code=status.HTTP_201_CREATED)
+def actualizar_instrucciones():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    query = """
+        UPDATE CustomInstruction
+        SET active = 0
+        WHERE active = 1
+    """
+    cursor.execute(query)
+    conn.commit()
+    cursor.close()
+    conn.close()
 
 class InsertarInstruccion(BaseModel):
     instruccion: str
@@ -331,13 +422,8 @@ class InsertarInstruccion(BaseModel):
 
 @app.post("/CustomInstruction", status_code=status.HTTP_201_CREATED)
 def create_custom_instruction(instruction: InsertarInstruccion):
-    query = """
-        UPDATE CustomInstruction
-        SET active = 0
-        WHERE active = 1
-    """
-    cursor.execute(query)
-
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT user_id FROM User WHERE email = %s
     """
@@ -349,9 +435,13 @@ def create_custom_instruction(instruction: InsertarInstruccion):
     """
     cursor.execute(query, (instruction.instruccion, user_id[0]))
     conn.commit()
+    cursor.close()
+    conn.close()
 
 @app.get("/ObtenerClasificaciones", status_code=status.HTTP_200_OK)
 def get_request_query_classifications():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT classification
         FROM RequestQuery
@@ -360,10 +450,14 @@ def get_request_query_classifications():
     """
     cursor.execute(select_query)
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/ObtenerContadorSolicitudes", status_code=status.HTTP_200_OK)
 def get_obtener_contador_solicitudes():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     select_query = """
         SELECT COUNT(*)
         FROM RequestQuery
@@ -371,6 +465,8 @@ def get_obtener_contador_solicitudes():
     """
     cursor.execute(select_query)
     result = cursor.fetchone()
+    cursor.close()
+    conn.close()
     return result[0]
 
 class SolicitudesSoporte(BaseModel):
@@ -379,6 +475,8 @@ class SolicitudesSoporte(BaseModel):
 
 @app.get("/ObtenerSolicitudesSoporte", status_code=status.HTTP_200_OK)
 def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT request_query_id, register_date, u.email, u.name, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
         FROM RequestQuery r
@@ -389,6 +487,8 @@ def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
     """
     cursor.execute(query, (solicitudes_soporte.estado, 1 if solicitudes_soporte.estado == "Resuelta" else 0 if solicitudes_soporte.estado == "Pendiente" else None, solicitudes_soporte.tema, solicitudes_soporte.tema))
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 class SolicitudSoporteIndividual(BaseModel):
@@ -396,6 +496,8 @@ class SolicitudSoporteIndividual(BaseModel):
 
 @app.get("/ObtenerContextoSolicitud", status_code=status.HTTP_200_OK)
 def get_support_requests(solicitud: SolicitudSoporteIndividual):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT context
         FROM RequestQuery
@@ -403,6 +505,8 @@ def get_support_requests(solicitud: SolicitudSoporteIndividual):
     """
     cursor.execute(query, (solicitud.indice,))
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 class SolicitudResolucion(BaseModel):
@@ -411,8 +515,8 @@ class SolicitudResolucion(BaseModel):
 
 @app.put("/SolicitudResolucion", status_code=status.HTTP_201_CREATED)
 def request_resolution(solicitud_resolucion: SolicitudResolucion):
-    print(solicitud_resolucion.respuesta)
-    print(solicitud_resolucion.id)
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         UPDATE RequestQuery
         SET reply = %s, resolved = 1
@@ -420,6 +524,8 @@ def request_resolution(solicitud_resolucion: SolicitudResolucion):
     """
     cursor.execute(query, (solicitud_resolucion.respuesta, solicitud_resolucion.id))
     conn.commit()
+    cursor.close()
+    conn.close()
 
 class FechasRango(BaseModel):
     start_date: str
@@ -427,6 +533,8 @@ class FechasRango(BaseModel):
 
 @app.get("/ObtenerCantConversaciones", status_code=status.HTTP_200_OK)
 def get_conversations_amount(fechas: FechasRango):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT COUNT(*)
         FROM Session
@@ -436,10 +544,14 @@ def get_conversations_amount(fechas: FechasRango):
     """
     cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/RatioConsultasDerivadas", status_code=status.HTTP_200_OK)
 def get_ratio_derived_queries(fechas: FechasRango):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT 
             ROUND((COUNT(CASE WHEN derived = 1 THEN 1 END) * 100.0 / COUNT(*)), 2) AS porcentaje_consultas_derivadas
@@ -452,10 +564,14 @@ def get_ratio_derived_queries(fechas: FechasRango):
     """
     cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/PromedioEstudiantesActivos", status_code=status.HTTP_200_OK)
 def get_active_students_average(fechas: FechasRango):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT 
             AVG(d.conteo_usuario) AS prom_usuario_activos
@@ -476,10 +592,14 @@ def get_active_students_average(fechas: FechasRango):
     """
     cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/CantidadUsuarios", status_code=status.HTTP_200_OK)
 def get_users_amount():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT COUNT(*)
         FROM User
@@ -488,10 +608,14 @@ def get_users_amount():
     """
     cursor.execute(query)
     result = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/CantidadConsultasDiarias", status_code=status.HTTP_200_OK)
 def get_queries_amount(fechas: FechasRango):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     # query = """
     #     SELECT 
     #         DATE_FORMAT(register_date, '%%d/%%m/%%Y') AS dia,
@@ -520,10 +644,14 @@ def get_queries_amount(fechas: FechasRango):
     """
     cursor.execute(query, (fechas.start_date, fechas.end_date))
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
 
 @app.get("/Top5TemasConsulta", status_code=status.HTTP_200_OK)
 def get_top5_query_themes():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     query = """
         SELECT 
             classification AS tema,
@@ -538,4 +666,6 @@ def get_top5_query_themes():
     """
     cursor.execute(query)
     result = cursor.fetchall()
+    cursor.close()
+    conn.close()
     return result
