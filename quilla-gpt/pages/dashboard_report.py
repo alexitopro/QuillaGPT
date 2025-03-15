@@ -176,7 +176,12 @@ if st.session_state.support_requests > 0:
     button_text += f" ({st.session_state.support_requests})"
 
 with st.sidebar:
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    st.markdown(
+        f"""
+        <h1 style="color:#00205B;">Bienvenido, {st.session_state["username"]}!</h1>
+        """,
+        unsafe_allow_html=True
+    )
     
     st.write("")
     

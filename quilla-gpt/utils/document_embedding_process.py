@@ -2,6 +2,7 @@ import os
 import re
 import streamlit as st
 import openai
+from datetime import datetime
 
 #conectarse a pinecone y crear un index si tdv no se ha hecho
 def pinecone_init(index_name):
@@ -68,7 +69,7 @@ def insertar_datos(data, embeddings, pc, tipo, index_name):
         {
             "id": f"{tipo}{total_vectores + idx}",
             "values": embedding,
-            "metadata": {"texto": d["text"], "fuente": d["source"], "pagina": d["page"]}
+            "metadata": {"texto": d["text"], "fuente": d["source"], "pagina": d["page"], "fecha de extracción": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         }
         for idx, (d, embedding) in enumerate(zip(data, embeddings))
     ]

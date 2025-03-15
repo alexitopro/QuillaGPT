@@ -7,6 +7,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from datetime import datetime
 from PIL import Image
 from io import BytesIO
 
@@ -144,6 +145,7 @@ def verDetalle(selected_index):
                 data['respuesta'] = respuesta
                 data['id'] = int(data_consulta[selected_index][0])
                 data['fuente'] = "Consulta derivada al administrador del banco de consultas de PandaGPT"
+                data['fecha de extracción'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 json_data = json.dumps(data)
                 data_dict = json.loads(json_data)
                 create_query_embedding(data_dict)
@@ -248,8 +250,12 @@ for i in range(len(data_consulta)):
             st.write(f"**Estado:** {data_consulta[i][7]}")
             st.write("")
         with col_cont2:
-            if st.button("Responder", key="editar"+str(i), type="secondary", icon=":material/reply:"):
-                verDetalle(i)
+            if data_consulta[i][7] == 'Pendiente':
+                if st.button("Responder", key="editar"+str(i), type="secondary", icon=":material/reply:"):
+                    verDetalle(i)
+            else:
+                if st.button("Ver detalle", key="editar"+str(i), type="secondary", icon=":material/visibility:"):
+                    verDetalle(i)
 
 # df = pd.DataFrame(data, columns=["ID", "Fecha de registro", "Correo del usuario", "Tema", "Consulta", "Respuesta", "Estado"])
 # df['Fecha de registro'] = pd.to_datetime(df['Fecha de registro'], format="%Y-%m-%d")
@@ -283,7 +289,13 @@ if st.session_state.support_requests > 0:
     button_text += f" ({st.session_state.support_requests})"
 
 with st.sidebar:
-    st.title("Bienvenido, "+ f":blue[{st.session_state["username"]}]!")
+    st.markdown(
+        f"""
+        <h1 style="color:#00205B;">Bienvenido, {st.session_state["username"]}!</h1>
+        """,
+        unsafe_allow_html=True
+    )
+
     st.write("")
     
     if st.button("Gestión de Usuarios", use_container_width=True, type="secondary", icon=":material/group:"):
