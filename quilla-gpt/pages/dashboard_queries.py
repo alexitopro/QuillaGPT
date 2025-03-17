@@ -257,6 +257,9 @@ for i in range(len(data_consulta)):
                 if st.button("Ver detalle", key="editar"+str(i), type="secondary", icon=":material/visibility:"):
                     verDetalle(i)
 
+if any(consulta[7] == 'Pendiente' for consulta in data_consulta) == False and estado == 'Pendiente':
+    st.caption("No hay solicitudes de soporte pendientes registradas en la base de datos.")
+
 # df = pd.DataFrame(data, columns=["ID", "Fecha de registro", "Correo del usuario", "Tema", "Consulta", "Respuesta", "Estado"])
 # df['Fecha de registro'] = pd.to_datetime(df['Fecha de registro'], format="%Y-%m-%d")
 # df['Fecha de registro'] = df['Fecha de registro'].dt.strftime("%d/%m/%Y")

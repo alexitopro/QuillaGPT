@@ -63,7 +63,6 @@ if not st.session_state.user:
         st.write("")
         st.write("")
         st.markdown("<img src='app/static/panda.png' width='200' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
-
         #00205B
         st.markdown(
             '<div style="color: #00205B; font-size: 3em; font-weight: 600;">PandaGPT</div>',
