@@ -324,26 +324,25 @@ with tab3:
         st.session_state.text = data
         disable_instructions()
 
-    def save_instructions(instrucciones):
+    def save_instructions():
         if not st.session_state["disabled"]:
             req.put(url = "http://127.0.0.1:8000/ActualizarInstrucciones")
-            input = {"instruccion" : instrucciones, "correo" : st.session_state.user["email"]}
+            input = {"instruccion" : st.session_state.text, "correo" : st.session_state.user["email"]}
             print(input)
             req.post(url = "http://127.0.0.1:8000/CustomInstruction", data = json.dumps(input))
             st.toast("Las instrucciones personalizadas se han guardado exitosamente", icon=":material/check:")
-            st.session_state.text = instrucciones
         disable_instructions()
 
     st.write("Las instrucciones personalizadas permiten compartir lo que quieras que PandaGPT deba tener en cuenta al responder. Lo que compartas se tomará en cuenta en las conversaciones nuevas que los estudiantes de la PUCP tengan con él.")
 
     instrucciones = st.text_area("**Instrucciones personalizadas**", height=450, max_chars=None, placeholder="Escribe lo que quieres que sepa PandaGPT para responder mejor las consultas de los estudiantes...", disabled=st.session_state["disabled"], label_visibility="collapsed", key="text")
-
+    
     col1, col2, col3 = st.columns([8, 2, 2])
     with col2:
         if not st.session_state["disabled"]:
             st.button("Cancelar" if st.session_state["disabled"] else "Cancelar instrucciones", type="secondary", on_click=cancel_instructions, use_container_width=True)
     with col3:
-        st.button("Editar instrucciones" if st.session_state["disabled"] else "Guardar instrucciones", type="primary", on_click=save_instructions, use_container_width=True, args=(instrucciones, ))
+        st.button("Editar instrucciones" if st.session_state["disabled"] else "Guardar instrucciones", type="primary", on_click=save_instructions, use_container_width=True)
 
     st.subheader("Historial de instrucciones personalizadas", anchor=False)
 

@@ -433,40 +433,40 @@ else:
                 #     stream = False
                 # )
 
+                #identificamos el tema del mensaje
+                tema_response = cliente.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": """
+                        Cual es el titulo que mejor describe la consulta? Obligatoriamente debe ser uno de los siguientes:
+            1. Cambio de especialidad
+            2. Certificado de notas
+            3. Convalidación de cursos
+            4. Duplicado de carné universitario
+            5. Matrícula
+            6. Obtención del título profesional
+            7. Pago para trámites académicos no presenciales
+            8. Reconocimiento de cursos
+            9. Registro histórico de notas
+            10. Reincorporación
+            11. Retiro de cursos
+            12. Solicitud de constancias a la OCR
+            13. Transferencia interna
+            14. Verificación de grados y/o títulos
+            15. Otros
+                        Solo responde con el titulo correspondiente sin la numeración, nada más.
+                        """},
+                        {"role": "user", "content": "La consulta es" + prompt},
+                    ],
+                    temperature=0.2,
+                    max_tokens=50,
+                    stream=False
+                )
+                tema = tema_response.choices[0].message.content
+                tema = tema.replace('"', "")
+                
             response = st.write_stream(stream)
             st.session_state.feedback_response = True
-
-        #identificamos el tema del mensaje
-        tema_response = cliente.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": """
-                Cual es el titulo que mejor describe la consulta? Obligatoriamente debe ser uno de los siguientes:
-    1. Cambio de especialidad
-    2. Certificado de notas
-    3. Convalidación de cursos
-    4. Duplicado de carné universitario
-    5. Matrícula
-    6. Obtención del título profesional
-    7. Pago para trámites académicos no presenciales
-    8. Reconocimiento de cursos
-    9. Registro histórico de notas
-    10. Reincorporación
-    11. Retiro de cursos
-    12. Solicitud de constancias a la OCR
-    13. Transferencia interna
-    14. Verificación de grados y/o títulos
-    15. Otros
-                Solo responde con el titulo correspondiente sin la numeración, nada más.
-                """},
-                {"role": "user", "content": "La consulta es" + prompt},
-            ],
-            temperature=0.2,
-            max_tokens=50,
-            stream=False
-        )
-        tema = tema_response.choices[0].message.content
-        tema = tema.replace('"', "")
 
         #insertar el mensaje del usuario en la base de datos
         input = {"session_id" : st.session_state.current_session_id, "role" : "assistant", "content" : response, "classification" : tema}
