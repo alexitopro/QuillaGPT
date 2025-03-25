@@ -51,7 +51,7 @@ def extract_tramites_fci():
         if tramite.find('a'):
             nombre_tramite = tramite.find(config['selectores']['nombre_tramite']['tipo']).get_text()
 
-            link_tramite = tramite.find(config['selectores']['link_tramite']['tipo'])['href'] if tramite.find(config['selectores']['link_tramite']['tipo']).find(config['selectores']['nombre_tramite']['tipo']) or tramite.find(config['selectores']['nombre_tramite']['tipo']).find(config['selectores']['link_tramite']['tipo']) else ''
+            link_tramite = tramite.find(config['selectores']['link_tramite']['tipo'])['href'] if tramite.find(config['selectores']['link_tramite']['tipo']).find(config['selectores']['nombre_tramite']['tipo']) or tramite.find(config['selectores']['nombre_tramite']['tipo']).find(config['selectores']['link_tramite']['tipo']) else config['url']
 
             consideraciones_adicionales = ''
             if tramite.find(config['selectores']['consideraciones_adicionales']['tipo']):
