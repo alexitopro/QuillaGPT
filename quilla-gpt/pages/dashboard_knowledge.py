@@ -408,3 +408,47 @@ with st.sidebar:
 
     if st.button("Reporte de Indicadores", use_container_width=True, type="secondary", icon=":material/bar_chart:"):
         st.switch_page("./pages/dashboard_report.py")
+
+languages = {
+    "ES": {
+        "button": "Buscar",
+        "instructions": "Arrastre el archivo aquí",
+        "limits": "Límite de 10MB del archivo",
+    },
+}
+
+hide_label = (
+    """
+<style>
+    div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="stBaseButton-secondary"] {
+        color:white;
+    }
+    div[data-testid="stFileUploader"]>section[data-testid="stFileUploaderDropzone"]>button[data-testid="stBaseButton-secondary"]::after {
+        content: "BUTTON_TEXT";
+        color:black;
+        display: block;
+        position: absolute;
+    }
+    div[data-testid="stFileUploaderDropzoneInstructions"]>div>span {
+        visibility:hidden;
+    }
+    div[data-testid="stFileUploaderDropzoneInstructions"]>div>span::before {
+        content:"INSTRUCTIONS_TEXT";
+        visibility:visible;
+    }
+        div[data-testid="stFileUploaderDropzoneInstructions"]>div>small {
+        visibility:hidden;
+    }
+    div[data-testid="stFileUploaderDropzoneInstructions"]>div>small::before {
+        content:"FILE_LIMITS";
+        visibility:visible;
+    }
+</style>
+""".replace(
+        "BUTTON_TEXT", languages.get("ES").get("button")
+    )
+    .replace("INSTRUCTIONS_TEXT", languages.get("ES").get("instructions"))
+    .replace("FILE_LIMITS", languages.get("ES").get("limits"))
+)
+
+st.markdown(hide_label, unsafe_allow_html=True)

@@ -101,7 +101,7 @@ if not st.session_state.user:
         st.markdown(
             f"""
             <div style="text-align: center;">
-                <video autoplay loop muted style="width: 88%;">
+                <video autoplay loop muted style="width: 80%;">
                     <source src="data:video/webm;base64,{data_url}" type="video/webm">
                     Your browser does not support the video tag.
                 </video>
