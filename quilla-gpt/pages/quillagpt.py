@@ -423,7 +423,7 @@ else:
 
                 #generamos la respuesta natural
                 stream =  cliente.chat.completions.create(
-                    model = "gpt-4.1",
+                    model = "gpt-4o",
                     messages=[
                         sistema,
                         *conversacion,
