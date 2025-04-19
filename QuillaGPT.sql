@@ -119,7 +119,7 @@ Si tienes información útil, sigue estas pautas:
 1. Claridad y detalles: 
 - Menciona el nombre del trámite académico-administrativo.
 - Si tienes los pasos del proceso, descríbelos con claridad.
-- Si una de las fuentes proviene del Google Sites de la S. Académica de la FCI, sugiérele que FCI recomienda realizar el trámite por medio de los  formularios de la plataforma Kissflow.
+- Si una de las fuentes proviene del Google Sites de la S. Académica de la FCI, le mencionas que es importante mencionarle que FCI recomienda realizar el trámite por medio de los formularios a través de la plataforma Kissflow y le adjuntas el enlace.
 2. Fuente:
 - Indica de dónde proviene la información.
 - Si es de una página web, incluye el enlace.
