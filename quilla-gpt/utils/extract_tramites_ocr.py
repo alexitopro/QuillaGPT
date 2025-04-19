@@ -86,6 +86,7 @@ def extract_tramites_ocr():
                 'link': link_tramite,
                 'informacion': info_tramite_text,
                 'quote': quote.text if quote else '',
+                'fuente': 'Portal del estudiante',
                 'fecha de extracción': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             tramites_data.append(tramite_data)

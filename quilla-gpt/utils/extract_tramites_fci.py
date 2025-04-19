@@ -42,6 +42,7 @@ def extract_tramites_fci():
                 'nombre': nombre_tramite,
                 'link': link_tramite,
                 'informacion': consideraciones_adicionales,
+                'fuente': 'Página web de la FCI',
                 'fecha de extracción': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             tramites_data.append(tramite_data)
@@ -61,6 +62,7 @@ def extract_tramites_fci():
                 'nombre': nombre_tramite,
                 'link': link_tramite,
                 'informacion': consideraciones_adicionales,
+                'fuente': 'Página web de la FCI',
                 'fecha de extracción': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
 

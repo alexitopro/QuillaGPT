@@ -50,6 +50,7 @@ def extract_tramites_sites():
             'nombre': nombre_tramite,
             'link': link_tramite,
             'fecha de extracción': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'fuente': 'Google Sites de la S. Académica de la FCI',
             'contacto': contacto
         }
         tramites_data.append(tramite_data)

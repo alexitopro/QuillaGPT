@@ -395,18 +395,35 @@ else:
                 results = index.query(
                     namespace = "quillagpt-namespace",
                     vector = query_embedding,
-                    top_k = 3,
+                    top_k = 10,
                     include_values = False,
                     include_metadata = True
                 )
-                retrieved_documents = [f"Metadata: {result['metadata']}" for result in results['matches']]
+
+                boosting = {
+                    "Google Sites de la S. Académica de la FCI": 0.1,
+                    "Página web de la FCI": 0.05,
+                    "Portal del estudiante": 0.02
+                }
+                #cuando son otros es 0
+
+                def score(match):
+                    fuente = match['metadata'].get('fuente', '')
+                    boost = boosting.get(fuente, 0)
+                    return match['score'] + boost
+
+                soft_reranking = sorted(results['matches'], key=score, reverse=True)
+
+                top = soft_reranking[:5]
+
+                retrieved_documents = [f"Metadata: {match['metadata']}" for match in top]
                 contexto = "\n".join(retrieved_documents)
 
-                print(results)
+                print(top)
 
                 #generamos la respuesta natural
                 stream =  cliente.chat.completions.create(
-                    model = "gpt-4o-mini",
+                    model = "gpt-4.1",
                     messages=[
                         sistema,
                         *conversacion,
