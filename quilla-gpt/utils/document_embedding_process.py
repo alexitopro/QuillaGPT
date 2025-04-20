@@ -30,7 +30,7 @@ def preprocesar_texto(texto):
 #procesar archivo pdf
 def procesar_arch_pdf(arch):
     from langchain_community.document_loaders import PyPDFLoader
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
 
     #cargar el archivo pdf
     pdf_loader = PyPDFLoader(arch)
