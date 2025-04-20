@@ -16,3 +16,4 @@ pydantic==2.9.2
 uvicorn==0.34.0
 openai==1.58.1
 beautifulsoup4==4.12.3
+authlib==1.5.2

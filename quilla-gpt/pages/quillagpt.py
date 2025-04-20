@@ -183,11 +183,12 @@ if page == "Configuración":
 elif page == "Cerrar sesión":
     st.session_state["username"] = ""
     st.session_state.messages = []
-    st.session_state["user"] = None
-    st.session_state["credentials"] = None
+    # st.session_state["user"] = None
+    # st.session_state["credentials"] = None
     st.session_state.feedback_response = False
     st.session_state.page_session = " "
-    st.switch_page('main.py')
+    # st.switch_page('main.py')
+    st.logout()
 elif page == "Panel de Administrador":
     st.session_state.messages = []
     st.session_state.feedback_response = False

@@ -37,93 +37,105 @@ conn = pymysql.connect(
     database=st.secrets["mysql"]["database"]
 )
 
-def login_callback():
+# def login_callback():
     
-    credentials = flow.run_local_server(
-        port=9000,
-        open_browser=True,
-        success_message="La autenticación ha sido completada exitosamente. Ya puedes cerrar esta ventana.",
-        prompt="login",
+#     credentials = flow.run_local_server(
+#         port=9000,
+#         open_browser=True,
+#         success_message="La autenticación ha sido completada exitosamente. Ya puedes cerrar esta ventana.",
+#         prompt="login",
+#     )
+#     id_info = id_token.verify_token(
+#         credentials.id_token,
+#         requests.Request(),
+#         clock_skew_in_seconds=10
+#     )
+#     st.session_state.credentials = credentials
+#     st.session_state.user = id_info
+
+# st.session_state.user = {}
+
+# if not st.session_state.user:
+
+if "user" not in st.session_state or st.session_state.user is None:
+    st.session_state.user = {}
+
+col1, col3 = st.columns([2, 2])
+with col1:
+    st.write("")
+    st.write("")
+    st.write("")
+    st.write("")
+    st.write("")
+    st.markdown("<img src='app/static/panda.png' width='200' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
+    #00205B
+    st.markdown(
+        '<div style="color: #00205B; font-size: 3em; font-weight: 600;">PandaGPT</div>',
+        unsafe_allow_html=True
     )
-    id_info = id_token.verify_token(
-        credentials.id_token,
-        requests.Request(),
-        clock_skew_in_seconds=10
+
+    st.markdown(
+        '<div style="color: #00205B; font-size: 1.5em; font-weight: 600;">Un asistente virtual pensado en ti para trámites de la Facultad de Ciencias e Ingeniería.</div>',
+        unsafe_allow_html=True
     )
-    st.session_state.credentials = credentials
-    st.session_state.user = id_info
 
-if not st.session_state.user:
-
-    col1, col3 = st.columns([2, 2])
-    with col1:
-        st.write("")
-        st.write("")
-        st.write("")
-        st.write("")
-        st.write("")
-        st.markdown("<img src='app/static/panda.png' width='200' style='display: block; margin: 0 auto;'>" , unsafe_allow_html=True)
-        #00205B
-        st.markdown(
-            '<div style="color: #00205B; font-size: 3em; font-weight: 600;">PandaGPT</div>',
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            '<div style="color: #00205B; font-size: 1.5em; font-weight: 600;">Un asistente virtual pensado en ti para trámites de la Facultad de Ciencias e Ingeniería.</div>',
-            unsafe_allow_html=True
-        )
-
-        #00CFB4
-        with stylable_container(
-        key="registrarse_button",
-        css_styles="""
-                .element-container:has(#button-after) + div button {
-                    background-color: #00CFB4 !important;
-                    color: white !important;
-                    border-color: #00CFB4 !important;
-                }
-                .element-container:has(#button-after) + div button::hover {
-                    background-color: #00CFB4 !important;
-                    border-color: #00CFB4 !important;
-                }
-                """,
-        ):
-            st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
-            st.button("Iniciar sesión con Google", type = 'secondary', icon=':material/login:', use_container_width = True, on_click=login_callback)
-
-    with col3:
-        file_ = open("./static/Inicio Animation.webm", "rb")
-        contents = file_.read()
-        data_url = base64.b64encode(contents).decode("utf-8")
-        file_.close()
-
-        st.markdown(
-            f"""
-            <div style="text-align: center;">
-                <video autoplay loop muted style="width: 80%;">
-                    <source src="data:video/webm;base64,{data_url}" type="video/webm">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
+    #00CFB4
+    with stylable_container(
+    key="registrarse_button",
+    css_styles="""
+            .element-container:has(#button-after) + div button {
+                background-color: #00CFB4 !important;
+                color: white !important;
+                border-color: #00CFB4 !important;
+            }
+            .element-container:has(#button-after) + div button::hover {
+                background-color: #00CFB4 !important;
+                border-color: #00CFB4 !important;
+            }
             """,
-            unsafe_allow_html=True,
-        )
+    ):
+        st.markdown('<span id="button-after"></span>', unsafe_allow_html=True)
+        # st.button("Iniciar sesión con Google", type = 'secondary', icon=':material/login:', use_container_width = True, on_click=login_callback)
+        if st.button("Iniciar sesión con Google", type = 'secondary', icon=':material/login:', use_container_width = True):
+            st.login()
 
-        st.stop()
+with col3:
+    file_ = open("./static/Inicio Animation.webm", "rb")
+    contents = file_.read()
+    data_url = base64.b64encode(contents).decode("utf-8")
+    file_.close()
 
-result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user["email"]}")
-if result.status_code == 200:
-    if result.json() != -1:
-        print("Se procede a iniciar sesión con el rol del usuario")
-        st.session_state.role_id = result.json()[2]
-        st.session_state["username"] = st.session_state.user["given_name"]
-        print(st.session_state.user)
-        st.switch_page('./pages/quillagpt.py')
-    else:
-        print("Se procede a crear un nuevo usuario con rol de estudiante")
-        input = {"email" : st.session_state.user["email"], "name": st.session_state.user["name"]}
-        result = req.post(url="http://127.0.0.1:8000/User", data = json.dumps(input))
-        st.session_state.role_id = 2
-        st.session_state["username"] = st.session_state.user["given_name"]
-        st.switch_page('./pages/onboarding_p1.py')
+    st.markdown(
+        f"""
+        <div style="text-align: center;">
+            <video autoplay loop muted style="width: 80%;">
+                <source src="data:video/webm;base64,{data_url}" type="video/webm">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+        # st.stop()
+
+if st.experimental_user and hasattr(st.experimental_user, "email"):
+    result = req.get(f"http://127.0.0.1:8000/User/{st.experimental_user.email}")
+    if result.status_code == 200:
+        st.session_state.user['email'] = st.experimental_user.email
+        st.session_state.user['given_name'] = st.experimental_user.given_name
+        st.session_state.user['name'] = st.experimental_user.name
+        st.session_state.user['picture'] = st.experimental_user.picture
+        if result.json() != -1:
+            print("Se procede a iniciar sesión con el rol del usuario")
+            st.session_state.role_id = result.json()[2]
+            st.session_state["username"] = st.session_state.user["given_name"]
+            print(st.session_state.user)
+            st.switch_page('./pages/quillagpt.py')
+        else:
+            print("Se procede a crear un nuevo usuario con rol de estudiante")
+            input = {"email" : st.session_state.user["email"], "name": st.session_state.user["name"]}
+            result = req.post(url="http://127.0.0.1:8000/User", data = json.dumps(input))
+            st.session_state.role_id = 2
+            st.session_state["username"] = st.session_state.user["given_name"]
+            st.switch_page('./pages/onboarding_p1.py')

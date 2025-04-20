@@ -81,10 +81,11 @@ elif page == "Cerrar sesión":
     st.session_state.page_session = " "
     st.session_state["username"] = ""
     st.session_state.messages = []
-    st.session_state["user"] = None
-    st.session_state["credentials"] = None
+    # st.session_state["user"] = None
+    # st.session_state["credentials"] = None
     st.session_state.feedback_response = False
-    st.switch_page('main.py')
+    # st.switch_page('main.py')
+    st.logout()
 elif page == "Panel de Estudiante":
     st.session_state.page_session = " "
     st.switch_page('./pages/quillagpt.py')
