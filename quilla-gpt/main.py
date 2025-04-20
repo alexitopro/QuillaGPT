@@ -15,15 +15,15 @@ if "credentials" not in st.session_state:
 if "role_id" not in st.session_state:
     st.session_state.role_id = None
 
-flow = InstalledAppFlow.from_client_secrets_file(
-    "./client_secret.json",
-    scopes=[
-        "openid",
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/userinfo.profile",
-    ],
-    redirect_uri="http://localhost:9000/",
-)
+# flow = InstalledAppFlow.from_client_secrets_file(
+#     "./client_secret.json",
+#     scopes=[
+#         "openid",
+#         "https://www.googleapis.com/auth/userinfo.email",
+#         "https://www.googleapis.com/auth/userinfo.profile",
+#     ],
+#     redirect_uri="http://localhost:9000/",
+# )
 
 st.set_page_config(
     layout = "wide",
