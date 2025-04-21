@@ -62,7 +62,7 @@ def create_web_scraping_embeddings():
     #preparar para el insertado de los datos
     records = [
         {
-            "id": f"{"FCI_WebScraping_"}{idx}",
+            "id": f"{'FCI_WebScraping_'}{idx}",
             "values": embedding,
             "metadata": d
         }
