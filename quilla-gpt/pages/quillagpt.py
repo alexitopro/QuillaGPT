@@ -292,7 +292,7 @@ with st.sidebar:
                 st.session_state.messages = []
                 st.session_state.feedback_response = False
         
-    result = req.get(f"http://127.0.0.1:8000/Session/ObtenerSesionesUsuario/{st.session_state.user["email"]}")
+    result = req.get(f"http://127.0.0.1:8000/Session/ObtenerSesionesUsuario/{st.session_state.user['email']}")
     sessions = result.json()
     if not sessions:
         st.caption("Por el momento no tienes conversaciones activas. Si deseas iniciar una nueva conversación, haz clic en el botón de + o ingresa directamente tu consulta en la entrada de chat de la pantalla principal.")
@@ -360,7 +360,7 @@ else:
                     )
                     titulo = response.choices[0].message.content
                     titulo = titulo.replace('"', "")
-                    result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user["email"]}")
+                    result = req.get(f"http://127.0.0.1:8000/User/{st.session_state.user['email']}")
                     user_id = result.json()[0]
                     #insertar la nueva session en la base de datos
                     input = {"user_id" : user_id, "titulo" : titulo}
