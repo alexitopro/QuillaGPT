@@ -291,6 +291,7 @@ with st.sidebar:
             if st.button(''):
                 st.session_state.messages = []
                 st.session_state.feedback_response = False
+                st.session_state.current_session_id = None
         
     result = req.get(f"http://127.0.0.1:8000/Session/ObtenerSesionesUsuario/{st.session_state.user['email']}")
     sessions = result.json()
@@ -346,7 +347,7 @@ else:
         with st.chat_message("assistant", avatar = "./static/panda_green.png"):
             lottie_spinner = load_lottie_json("./static/loader_thinking_2.json")
             with st_lottie_spinner(lottie_spinner, height=40, width=40, quality='high'):
-                if st.session_state.messages == []:
+                if st.session_state.messages == [] and st.session_state.current_session_id is None:
                     #generamos el titulo de la session
                     response = cliente.chat.completions.create(
                         model="gpt-4o-mini",
@@ -435,21 +436,6 @@ else:
                     max_tokens = 1000,
                     stream = True
                 )
-
-                # #generamos respuesta como string
-                # respuesta =  cliente.chat.completions.create(
-                #     model = "meta/llama-3.3-70b-instruct",
-                #     messages=[
-                #         sistema,
-                #         *conversacion,
-                #         {"role": "user", "content": prompt},
-                #         {"role": "assistant", "content": contexto}
-                #     ],
-                #     temperature = 0.2,
-                #     top_p = 0.7,
-                #     max_tokens = 1000,
-                #     stream = False
-                # )
 
                 #identificamos el tema del mensaje
                 tema_response = cliente.chat.completions.create(
