@@ -1,10 +1,14 @@
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from bs4 import BeautifulSoup
 from datetime import datetime
 import json
 
 def extract_tramites_sites():
-    driver = webdriver.Firefox()
+
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options = options)
 
     with open('./data/sites_keyword_config.json', 'r', encoding='utf-8') as f:
         config = json.load(f)
