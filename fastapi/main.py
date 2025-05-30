@@ -172,13 +172,49 @@ class EnviarFeedback(BaseModel):
     message_id: int
     email: str
 
+# @app.post("/RequestQuery", status_code=status.HTTP_201_CREATED)
+# def request_query(enviar_feedback: EnviarFeedback):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute("SET SESSION group_concat_max_len = 100000")
+#     query = """
+#         INSERT INTO RequestQuery (query, register_date, classification, resolved, user_id, context, active)
+#         VALUES (%s, %s, (SELECT classification FROM Message WHERE message_id = %s AND active = 1), 0, (SELECT user_id FROM User WHERE email = %s), 
+#         (
+#             SELECT GROUP_CONCAT(
+#                 CASE
+#                     WHEN role = 'user' THEN CONCAT('Usuario: ', content)
+#                     WHEN role = 'assistant' THEN CONCAT('Asistente: ', content)
+#                 END
+#                 ORDER BY message_id ASC SEPARATOR '\n'
+#             ) AS formatted_output
+#             FROM (
+#                 SELECT *
+#                 FROM Message
+#                 WHERE session_id = (
+#                     SELECT session_id
+#                     FROM Message
+#                     WHERE message_id = %s
+#                 )
+#                 AND message_id <= %s
+#                 ORDER BY timestamp DESC
+#                 LIMIT 2
+#             ) AS last_messages
+#         ),
+#         1)
+#     """
+#     cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id, enviar_feedback.message_id))
+#     conn.commit()
+#     cursor.close()
+#     conn.close()
+
 @app.post("/RequestQuery", status_code=status.HTTP_201_CREATED)
 def request_query(enviar_feedback: EnviarFeedback):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SET SESSION group_concat_max_len = 100000")
     query = """
-        INSERT INTO RequestQuery (query, register_date, classification, resolved, user_id, context, active)
+        INSERT INTO RequestQuery (query, register_date, classification, resolved, created_by, context, active, modified_by, session_id)
         VALUES (%s, %s, (SELECT classification FROM Message WHERE message_id = %s AND active = 1), 0, (SELECT user_id FROM User WHERE email = %s), 
         (
             SELECT GROUP_CONCAT(
@@ -201,9 +237,12 @@ def request_query(enviar_feedback: EnviarFeedback):
                 LIMIT 2
             ) AS last_messages
         ),
-        1)
+        1,
+        (SELECT user_id FROM User WHERE email = %s),
+        (SELECT session_id FROM Message WHERE message_id = %s)
+        )
     """
-    cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id, enviar_feedback.message_id))
+    cursor.execute(query, (enviar_feedback.derivar, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id, enviar_feedback.message_id, enviar_feedback.email, enviar_feedback.message_id))
     conn.commit()
     cursor.close()
     conn.close()
@@ -304,6 +343,23 @@ class CargarDocumento(BaseModel):
     current_date: str
     correo: str
 
+# @app.post("/CargarDocumento", status_code=status.HTTP_201_CREATED)
+# def cargar_documento(documento: CargarDocumento):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     cursor.execute("SELECT user_id FROM User WHERE email = %s", (documento.correo,))
+#     user = cursor.fetchone()
+
+#     query = """
+#         INSERT INTO File (content, name, register_date, type, active, user_id)
+#         VALUES (%s, %s, %s, %s, 1, %s)
+#     """
+#     cursor.execute(query, (documento.contenido, documento.filename, documento.current_date, 'DocumentoAdicional', user[0]))
+#     conn.commit()
+#     cursor.close()
+#     conn.close()
+#     return cursor.lastrowid
+
 @app.post("/CargarDocumento", status_code=status.HTTP_201_CREATED)
 def cargar_documento(documento: CargarDocumento):
     conn = get_db_connection()
@@ -312,7 +368,7 @@ def cargar_documento(documento: CargarDocumento):
     user = cursor.fetchone()
 
     query = """
-        INSERT INTO File (content, name, register_date, type, active, user_id)
+        INSERT INTO File (content, name, register_date, type, active, created_by)
         VALUES (%s, %s, %s, %s, 1, %s)
     """
     cursor.execute(query, (documento.contenido, documento.filename, documento.current_date, 'DocumentoAdicional', user[0]))
@@ -335,6 +391,27 @@ def delete_conversations(file_id: int):
     conn.close()
     return 1
 
+# @app.get("/File/{document_name}", status_code=status.HTTP_200_OK)
+# def get_file(document_name: str):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     select_query = """
+#         SELECT 
+#             file_id as 'ID',
+#             File.name as 'Nombre de documento',
+#             ROUND(LENGTH(content) / (1024 * 1024), 2) AS 'Tamaño del documento (MB)',
+#             register_date as 'Fecha de registro',
+#             u.name as 'Autor del documento'
+#         FROM File
+#         INNER JOIN User u ON File.user_id = u.user_id
+#         WHERE File.active = 1 AND File.name LIKE %s
+#     """
+#     cursor.execute(select_query, (f"%{document_name}%",))
+#     result = cursor.fetchall()
+#     cursor.close()
+#     conn.close()
+#     return result
+
 @app.get("/File/{document_name}", status_code=status.HTTP_200_OK)
 def get_file(document_name: str):
     conn = get_db_connection()
@@ -347,7 +424,7 @@ def get_file(document_name: str):
             register_date as 'Fecha de registro',
             u.name as 'Autor del documento'
         FROM File
-        INNER JOIN User u ON File.user_id = u.user_id
+        INNER JOIN User u ON File.created_by = u.user_id
         WHERE File.active = 1 AND File.name LIKE %s
     """
     cursor.execute(select_query, (f"%{document_name}%",))
@@ -355,6 +432,27 @@ def get_file(document_name: str):
     cursor.close()
     conn.close()
     return result
+
+# @app.get("/File/", status_code=status.HTTP_200_OK)
+# def get_file():
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     select_query = """
+#         SELECT 
+#             file_id as 'ID',
+#             File.name as 'Nombre de documento',
+#             ROUND(LENGTH(content) / (1024 * 1024), 2) AS 'Tamaño del documento (MB)',
+#             register_date as 'Fecha de registro',
+#             u.name as 'Autor del documento'
+#         FROM File
+#         INNER JOIN User u ON File.user_id = u.user_id
+#         WHERE File.active = 1
+#     """
+#     cursor.execute(select_query)
+#     result = cursor.fetchall()
+#     cursor.close()
+#     conn.close()
+#     return result
 
 @app.get("/File/", status_code=status.HTTP_200_OK)
 def get_file():
@@ -368,7 +466,7 @@ def get_file():
             register_date as 'Fecha de registro',
             u.name as 'Autor del documento'
         FROM File
-        INNER JOIN User u ON File.user_id = u.user_id
+        INNER JOIN User u ON File.created_by = u.user_id
         WHERE File.active = 1
     """
     cursor.execute(select_query)
@@ -388,6 +486,23 @@ def get_custom_instruction():
     conn.close()
     return result
 
+# @app.get("/ListarInstruccionesInactivas", status_code=status.HTTP_200_OK)
+# def list_custom_instruction():
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     select_query = """
+#         SELECT instruction, register_date, User.email, User.name
+#         FROM CustomInstruction
+#         INNER JOIN User ON CustomInstruction.user_id = User.user_id
+#         WHERE CustomInstruction.active = 0 
+#         ORDER BY custom_instruction_id DESC
+#     """
+#     cursor.execute(select_query)
+#     result = cursor.fetchall()
+#     cursor.close()
+#     conn.close()
+#     return result
+
 @app.get("/ListarInstruccionesInactivas", status_code=status.HTTP_200_OK)
 def list_custom_instruction():
     conn = get_db_connection()
@@ -395,7 +510,7 @@ def list_custom_instruction():
     select_query = """
         SELECT instruction, register_date, User.email, User.name
         FROM CustomInstruction
-        INNER JOIN User ON CustomInstruction.user_id = User.user_id
+        INNER JOIN User ON CustomInstruction.created_by = User.user_id
         WHERE CustomInstruction.active = 0 
         ORDER BY custom_instruction_id DESC
     """
@@ -423,6 +538,24 @@ class InsertarInstruccion(BaseModel):
     instruccion: str
     correo: str
 
+# @app.post("/CustomInstruction", status_code=status.HTTP_201_CREATED)
+# def create_custom_instruction(instruction: InsertarInstruccion):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     query = """
+#         SELECT user_id FROM User WHERE email = %s
+#     """
+#     cursor.execute(query, (instruction.correo,))
+#     user_id = cursor.fetchone()
+#     query = """
+#         INSERT INTO CustomInstruction (instruction, register_date, user_id, active)
+#         VALUES (%s, CURDATE(), %s, 1)
+#     """
+#     cursor.execute(query, (instruction.instruccion, user_id[0]))
+#     conn.commit()
+#     cursor.close()
+#     conn.close()
+
 @app.post("/CustomInstruction", status_code=status.HTTP_201_CREATED)
 def create_custom_instruction(instruction: InsertarInstruccion):
     conn = get_db_connection()
@@ -433,7 +566,7 @@ def create_custom_instruction(instruction: InsertarInstruccion):
     cursor.execute(query, (instruction.correo,))
     user_id = cursor.fetchone()
     query = """
-        INSERT INTO CustomInstruction (instruction, register_date, user_id, active)
+        INSERT INTO CustomInstruction (instruction, register_date, created_by, active)
         VALUES (%s, CURDATE(), %s, 1)
     """
     cursor.execute(query, (instruction.instruccion, user_id[0]))
@@ -476,6 +609,24 @@ class SolicitudesSoporte(BaseModel):
     tema: str
     estado: str
 
+# @app.get("/ObtenerSolicitudesSoporte", status_code=status.HTTP_200_OK)
+# def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
+#     conn = get_db_connection()
+#     cursor = conn.cursor()
+#     query = """
+#         SELECT request_query_id, register_date, u.email, u.name, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
+#         FROM RequestQuery r
+#         JOIN User u ON r.user_id = u.user_id
+#         WHERE r.active = 1 
+#             AND (%s = 'Todos' OR resolved = %s)
+#             AND (%s = 'Todos' OR classification = %s)
+#     """
+#     cursor.execute(query, (solicitudes_soporte.estado, 1 if solicitudes_soporte.estado == "Resuelta" else 0 if solicitudes_soporte.estado == "Pendiente" else None, solicitudes_soporte.tema, solicitudes_soporte.tema))
+#     result = cursor.fetchall()
+#     cursor.close()
+#     conn.close()
+#     return result
+
 @app.get("/ObtenerSolicitudesSoporte", status_code=status.HTTP_200_OK)
 def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
     conn = get_db_connection()
@@ -483,7 +634,7 @@ def get_support_requests(solicitudes_soporte: SolicitudesSoporte):
     query = """
         SELECT request_query_id, register_date, u.email, u.name, classification, query, IF(reply IS NULL, '-', reply), IF(resolved = 1, 'Resuelta', 'Pendiente') AS status
         FROM RequestQuery r
-        JOIN User u ON r.user_id = u.user_id
+        JOIN User u ON r.created_by = u.user_id
         WHERE r.active = 1 
             AND (%s = 'Todos' OR resolved = %s)
             AND (%s = 'Todos' OR classification = %s)
